@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BookCard from '../components/BookCard.astro';
+import KolamDivider from '../components/KolamDivider.astro';
+import { getCollection } from 'astro:content';
+
+const books = await getCollection('reading');
+const reading = books.filter((b) => b.data.status === 'reading');
+const finished = books
+  .filter((b) => b.data.status === 'finished')
+  .sort((a, b) => (b.data.finishedDate?.valueOf() ?? 0) - (a.data.finishedDate?.valueOf() ?? 0));
+const queued = books.filter((b) => b.data.status === 'queued');
+---
+
+<BaseLayout title="Reading" description="Books that have shaped my thinking — and what I'm reading now.">
+  <section class="page-container py-16 sm:py-24">
+    <div class="max-w-2xl mb-12 reveal">
+      <h1 class="font-serif text-3xl sm:text-4xl font-bold text-umber-800 dark:text-cream-100 mb-4">
+        Reading
+      </h1>
+      <p class="text-umber-600 dark:text-cream-400 leading-relaxed">
+        Books that have shaped how I think about product, design, and craft. 
+        I believe the best product people are voracious readers who draw connections across domains.
+      </p>
+    </div>
+
+    {reading.length > 0 && (
+      <div class="mb-16">
+        <h2 class="section-heading mb-6 reveal">📖 Currently reading</h2>
+        <div class="grid gap-4 sm:grid-cols-2">
+          {reading.map((book) => (
+            <div class="reveal">
+              <BookCard
+                title={book.data.title}
+                author={book.data.author}
+                status={book.data.status}
+                rating={book.data.rating}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {finished.length > 0 && (
+      <div class="mb-16">
+        <KolamDivider />
+        <h2 class="section-heading mb-6 reveal">✅ Finished</h2>
+        <div class="grid gap-4 sm:grid-cols-2">
+          {finished.map((book) => (
+            <div class="reveal">
+              <BookCard
+                title={book.data.title}
+                author={book.data.author}
+                status={book.data.status}
+                rating={book.data.rating}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {queued.length > 0 && (
+      <div>
+        <KolamDivider />
+        <h2 class="section-heading mb-6 reveal">📋 Up next</h2>
+        <div class="grid gap-4 sm:grid-cols-2">
+          {queued.map((book) => (
+            <div class="reveal">
+              <BookCard
+                title={book.data.title}
+                author={book.data.author}
+                status={book.data.status}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </section>
+</BaseLayout>

@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+// Get unique tags
+const allTags = [...new Set(posts.flatMap((post) => post.data.tags || []))].sort();
+---
+
+<BaseLayout title="Blog" description="Thoughts on product craft, design, AI, and building software with intention.">
+  <section class="page-container py-16 sm:py-24">
+    <div class="max-w-2xl mb-12 reveal">
+      <h1 class="font-serif text-3xl sm:text-4xl font-bold text-umber-800 dark:text-cream-100 mb-4">
+        Blog
+      </h1>
+      <p class="text-umber-600 dark:text-cream-400 leading-relaxed">
+        Thoughts on product craft, design, AI, and building software with intention.
+      </p>
+    </div>
+
+    {allTags.length > 0 && (
+      <div class="flex flex-wrap gap-2 mb-10 reveal">
+        <span class="text-sm text-umber-500 dark:text-cream-500 mr-2 self-center">Filter:</span>
+        {allTags.map((tag) => (
+          <button
+            data-tag={tag}
+            class="tag-filter px-3 py-1 text-sm font-medium rounded-full border border-cream-400 dark:border-charcoal-700 text-umber-600 dark:text-cream-400 hover:bg-saffron-50 hover:border-saffron-300 dark:hover:bg-saffron-900/20 dark:hover:border-saffron-700 transition-colors"
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
+    )}
+
+    <div class="grid gap-5 sm:grid-cols-2" id="blog-grid">
+      {posts.map((post) => (
+        <div class="reveal" data-tags={JSON.stringify(post.data.tags || [])}>
+          <BlogCard
+            title={post.data.title}
+            description={post.data.description}
+            date={post.data.date}
+            tags={post.data.tags}
+            slug={post.slug}
+          />
+        </div>
+      ))}
+    </div>
+
+    {posts.length === 0 && (
+      <div class="text-center py-20">
+        <p class="text-umber-500 dark:text-cream-500 text-lg">
+          No posts yet. Check back soon!
+        </p>
+      </div>
+    )}
+  </section>
+</BaseLayout>
+
+<script is:inline>
+  document.querySelectorAll('.tag-filter').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tag = btn.dataset.tag;
+      const isActive = btn.classList.contains('active-tag');
+
+      // Reset all buttons
+      document.querySelectorAll('.tag-filter').forEach((b) => {
+        b.classList.remove('active-tag', 'bg-saffron-500', 'text-white', 'border-saffron-500');
+      });
+
+      if (!isActive) {
+        btn.classList.add('active-tag', 'bg-saffron-500', 'text-white', 'border-saffron-500');
+      }
+
+      // Filter posts
+      const cards = document.querySelectorAll('#blog-grid > div');
+      cards.forEach((card) => {
+        const tags = JSON.parse(card.dataset.tags || '[]');
+        if (isActive || tags.includes(tag)) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>

@@ -1,0 +1,130 @@
+---
+const navLinks = [
+  { href: '/about', label: 'About' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/projects', label: 'Projects' },
+  { href: '/now', label: 'Now' },
+  { href: '/reading', label: 'Reading' },
+  { href: '/uses', label: 'Uses' },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<header class="sticky top-0 z-50 backdrop-blur-lg bg-cream-100/80 dark:bg-charcoal-900/80 border-b border-cream-300/50 dark:border-charcoal-700/50">
+  <nav class="page-container flex items-center justify-between h-16">
+    <!-- Logo -->
+    <a href="/" class="font-serif text-xl font-semibold text-umber-800 dark:text-cream-100 hover:text-saffron-500 dark:hover:text-saffron-400 transition-colors">
+      GK
+    </a>
+
+    <!-- Desktop nav -->
+    <div class="hidden md:flex items-center gap-1">
+      {navLinks.map(({ href, label }) => (
+        <a
+          href={href}
+          class:list={[
+            'px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+            currentPath.startsWith(href)
+              ? 'text-saffron-600 dark:text-saffron-400 bg-saffron-50 dark:bg-saffron-900/20'
+              : 'text-umber-600 dark:text-cream-400 hover:text-saffron-500 dark:hover:text-saffron-400 hover:bg-cream-200 dark:hover:bg-charcoal-700',
+          ]}
+        >
+          {label}
+        </a>
+      ))}
+
+      <!-- Search button -->
+      <button
+        id="search-btn-desktop"
+        class="ml-2 p-2 rounded-lg text-umber-500 dark:text-cream-400 hover:bg-cream-200 dark:hover:bg-charcoal-700 transition-colors"
+        aria-label="Search"
+        title="Search (⌘K)"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </button>
+
+      <!-- Theme toggle -->
+      <button
+        id="theme-toggle"
+        class="p-2 rounded-lg text-umber-500 dark:text-cream-400 hover:bg-cream-200 dark:hover:bg-charcoal-700 transition-colors"
+        aria-label="Toggle dark mode"
+      >
+        <!-- Sun icon (shown in dark mode) -->
+        <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <!-- Moon icon (shown in light mode) -->
+        <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile menu button -->
+    <div class="flex items-center gap-2 md:hidden">
+      <button
+        id="search-btn-mobile"
+        class="p-2 rounded-lg text-umber-500 dark:text-cream-400"
+        aria-label="Search"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </button>
+      <button
+        id="mobile-menu-btn"
+        class="p-2 rounded-lg text-umber-500 dark:text-cream-400"
+        aria-label="Open menu"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden md:hidden border-t border-cream-300/50 dark:border-charcoal-700/50 bg-cream-100/95 dark:bg-charcoal-900/95 backdrop-blur-lg">
+    <div class="page-container py-4 flex flex-col gap-1">
+      {navLinks.map(({ href, label }) => (
+        <a
+          href={href}
+          class:list={[
+            'px-4 py-3 text-sm font-medium rounded-lg transition-colors',
+            currentPath.startsWith(href)
+              ? 'text-saffron-600 dark:text-saffron-400 bg-saffron-50 dark:bg-saffron-900/20'
+              : 'text-umber-600 dark:text-cream-400 hover:bg-cream-200 dark:hover:bg-charcoal-700',
+          ]}
+        >
+          {label}
+        </a>
+      ))}
+      <button
+        id="theme-toggle-mobile"
+        class="px-4 py-3 text-sm font-medium text-left rounded-lg text-umber-600 dark:text-cream-400 hover:bg-cream-200 dark:hover:bg-charcoal-700 transition-colors"
+      >
+        <span class="dark:hidden">Switch to dark mode</span>
+        <span class="hidden dark:inline">Switch to light mode</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<script is:inline>
+  // Mobile menu toggle
+  document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+    document.getElementById('mobile-menu')?.classList.toggle('hidden');
+  });
+
+  // Theme toggle
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }
+  document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
+  document.getElementById('theme-toggle-mobile')?.addEventListener('click', toggleTheme);
+</script>

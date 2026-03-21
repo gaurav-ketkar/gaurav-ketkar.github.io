@@ -1,0 +1,87 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import KolamDivider from '../components/KolamDivider.astro';
+---
+
+<BaseLayout title="About" description="Product Manager at GitHub, building support tools with craft and customer obsession.">
+  <section class="page-container py-16 sm:py-24">
+    <!-- Header -->
+    <div class="max-w-2xl mb-16 reveal">
+      <h1 class="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-umber-800 dark:text-cream-100 leading-tight mb-6">
+        About me
+      </h1>
+      <p class="text-lg text-umber-600 dark:text-cream-400 leading-relaxed">
+        I'm a Product Manager at <strong class="text-umber-800 dark:text-cream-200">GitHub</strong>, 
+        working on Customer Success Engineering — the team that builds the internal tools 
+        and systems powering GitHub's support experience.
+      </p>
+    </div>
+
+    <div class="prose prose-lg dark:prose-invert max-w-2xl">
+      <h2>What I do</h2>
+      <p>
+        I lead product for support tooling — the forms customers fill out, the AI that helps 
+        classify and route tickets, the dashboards agents use to resolve issues, and the 
+        automation that handles what humans shouldn't have to. My work sits at the intersection 
+        of <strong>customer experience</strong>, <strong>AI/automation</strong>, and 
+        <strong>internal tools design</strong>.
+      </p>
+      <p>
+        I believe support tooling is one of the best training grounds for product craft: real 
+        users with real problems, measurable impact within days, enormous design challenges, 
+        and the AI disruption wave hitting directly. Every feature I ship either saves a 
+        customer time waiting, or saves an agent time searching — ideally both.
+      </p>
+
+      <KolamDivider />
+
+      <h2>How I think about product</h2>
+      <p>
+        My operating philosophy comes down to a few principles I return to constantly:
+      </p>
+
+      <h3>🎧 Sit in silence with two customers</h3>
+      <p>
+        I have two customers — the end-users who encounter problems, and the support agents 
+        who resolve them. Deep listening beats any pitch. "What grinds your gears?" is a 
+        better question than "What feature do you want?"
+      </p>
+
+      <h3>📊 Leak the dashboard</h3>
+      <p>
+        Every metric I track should pass the "leak test": if accidentally shared with users 
+        or agents, they'd be <em>ecstatic</em> about what's being measured. If a metric 
+        wouldn't make your customer smile, it's measuring the wrong thing.
+      </p>
+
+      <h3>🎨 Tilt your umbrella</h3>
+      <p>
+        Taste is a competitive advantage. I optimize for reducing <em>thinking</em> (comprehension) 
+        over reducing clicks. The goal is software that feels obvious — where the design 
+        disappears and only the utility remains.
+      </p>
+
+      <h3>🚀 Ship, measure, celebrate, learn</h3>
+      <p>
+        Within two weeks of every feature ship, communicate the impact. Not because it's 
+        "good optics" — because closing the feedback loop is how you build organizational 
+        trust in product-led development.
+      </p>
+
+      <KolamDivider />
+
+      <h2>Beyond work</h2>
+      <p>
+        I'm originally from India. I care deeply about craft in all its forms — whether 
+        that's product design, typography, cooking, or the way a well-structured argument 
+        unfolds. I believe the best work happens when you bring your full self to it, 
+        not just your professional persona.
+      </p>
+      <p>
+        I read widely (see my <a href="/reading">reading list</a>), think about design 
+        systems more than most people, and am always looking for the next thing to build 
+        with intention.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

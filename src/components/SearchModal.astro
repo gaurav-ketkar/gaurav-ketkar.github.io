@@ -1,0 +1,63 @@
+---
+---
+
+<!-- Search modal backdrop -->
+<div id="search-modal" class="hidden fixed inset-0 z-[100]">
+  <!-- Backdrop -->
+  <div id="search-backdrop" class="absolute inset-0 bg-umber-900/40 dark:bg-black/60 backdrop-blur-sm"></div>
+  
+  <!-- Modal -->
+  <div class="relative flex items-start justify-center pt-[15vh] px-4">
+    <div class="w-full max-w-xl bg-cream-100 dark:bg-charcoal-900 rounded-2xl shadow-warm-lg border border-cream-300 dark:border-charcoal-700 overflow-hidden">
+      <div id="pagefind-container" class="p-4"></div>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  function openSearch() {
+    const modal = document.getElementById('search-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      // Focus the search input after a short delay
+      setTimeout(() => {
+        const input = modal.querySelector('input');
+        if (input) input.focus();
+      }, 100);
+    }
+  }
+
+  function closeSearch() {
+    const modal = document.getElementById('search-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Open search from buttons
+  document.getElementById('search-btn-desktop')?.addEventListener('click', openSearch);
+  document.getElementById('search-btn-mobile')?.addEventListener('click', openSearch);
+
+  // Close on backdrop click
+  document.getElementById('search-backdrop')?.addEventListener('click', closeSearch);
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Cmd+K / Ctrl+K to open
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      const modal = document.getElementById('search-modal');
+      if (modal?.classList.contains('hidden')) {
+        openSearch();
+      } else {
+        closeSearch();
+      }
+    }
+    // Escape to close
+    if (e.key === 'Escape') {
+      closeSearch();
+    }
+  });
+</script>

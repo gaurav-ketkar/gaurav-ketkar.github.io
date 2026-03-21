@@ -1,0 +1,128 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BlogCard from '../components/BlogCard.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import KolamDivider from '../components/KolamDivider.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+
+const projects = (await getCollection('projects'))
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, 3);
+---
+
+<BaseLayout title="Home">
+  <!-- Hero -->
+  <section class="jali-pattern relative overflow-hidden">
+    <div class="page-container py-24 sm:py-32 lg:py-40">
+      <div class="max-w-2xl">
+        <p class="text-saffron-500 dark:text-saffron-400 font-medium text-sm tracking-wide uppercase mb-4 reveal">
+          Hello, I'm
+        </p>
+        <h1 class="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-umber-800 dark:text-cream-100 leading-[1.1] mb-6 reveal">
+          Gaurav Ketkar
+        </h1>
+        <p class="text-lg sm:text-xl text-umber-600 dark:text-cream-400 leading-relaxed mb-8 reveal max-w-xl">
+          Product Manager at GitHub. I think about how to make software feel obvious, 
+          measure what matters to users, and build tools that reduce friction — not just clicks.
+        </p>
+        <div class="flex flex-wrap gap-4 reveal">
+          <a
+            href="/about"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-saffron-500 text-white font-medium hover:bg-saffron-600 transition-colors shadow-warm-sm"
+          >
+            More about me
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+          <a
+            href="/blog"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-cream-400 dark:border-charcoal-700 text-umber-700 dark:text-cream-300 font-medium hover:bg-cream-200 dark:hover:bg-charcoal-700 transition-colors"
+          >
+            Read my writing
+          </a>
+        </div>
+      </div>
+    </div>
+    <!-- Decorative gradient -->
+    <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-cream-100 dark:from-charcoal-900 to-transparent pointer-events-none"></div>
+  </section>
+
+  <!-- Recent writing -->
+  {posts.length > 0 && (
+    <section class="page-container py-16 sm:py-24">
+      <div class="flex items-end justify-between mb-10 reveal">
+        <div>
+          <h2 class="section-heading">Recent writing</h2>
+          <p class="text-umber-500 dark:text-cream-500 mt-2">
+            Thoughts on product craft, design, and building with intention.
+          </p>
+        </div>
+        <a
+          href="/blog"
+          class="hidden sm:inline-flex items-center gap-1 text-sm text-saffron-500 hover:text-saffron-600 dark:text-saffron-400 transition-colors"
+        >
+          All posts
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </div>
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {posts.map((post) => (
+          <div class="reveal">
+            <BlogCard
+              title={post.data.title}
+              description={post.data.description}
+              date={post.data.date}
+              tags={post.data.tags}
+              slug={post.slug}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <KolamDivider />
+
+  <!-- Featured projects -->
+  {projects.length > 0 && (
+    <section class="page-container py-16 sm:py-24">
+      <div class="flex items-end justify-between mb-10 reveal">
+        <div>
+          <h2 class="section-heading">What I'm building</h2>
+          <p class="text-umber-500 dark:text-cream-500 mt-2">
+            Current and recent product initiatives.
+          </p>
+        </div>
+        <a
+          href="/projects"
+          class="hidden sm:inline-flex items-center gap-1 text-sm text-saffron-500 hover:text-saffron-600 dark:text-saffron-400 transition-colors"
+        >
+          All projects
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </div>
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {projects.map((project) => (
+          <div class="reveal">
+            <ProjectCard
+              title={project.data.title}
+              description={project.data.description}
+              status={project.data.status}
+              tags={project.data.tags}
+              url={project.data.url}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+</BaseLayout>

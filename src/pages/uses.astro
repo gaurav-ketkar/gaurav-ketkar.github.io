@@ -1,0 +1,66 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import KolamDivider from '../components/KolamDivider.astro';
+---
+
+<BaseLayout title="Uses" description="Tools, hardware, and software I use daily.">
+  <section class="page-container py-16 sm:py-24">
+    <div class="max-w-2xl mb-12 reveal">
+      <h1 class="font-serif text-3xl sm:text-4xl font-bold text-umber-800 dark:text-cream-100 mb-4">
+        Uses
+      </h1>
+      <p class="text-umber-600 dark:text-cream-400 leading-relaxed">
+        The tools and setup I rely on daily. Inspired by <a href="https://uses.tech" target="_blank" rel="noopener noreferrer" class="text-saffron-500 hover:text-saffron-600 dark:text-saffron-400">uses.tech</a>.
+      </p>
+    </div>
+
+    <div class="prose prose-lg dark:prose-invert max-w-2xl">
+      <h2>💻 Hardware</h2>
+      <ul>
+        <li><strong>MacBook Pro</strong> — Primary machine for everything</li>
+        <li><strong>Ergonomic keyboard</strong> — Wrists matter</li>
+        <li><strong>External monitor</strong> — Extra screen real estate for dashboard work</li>
+      </ul>
+
+      <KolamDivider />
+
+      <h2>🛠 Development</h2>
+      <ul>
+        <li><strong>VS Code</strong> — Primary editor, heavily customized with GitHub Copilot</li>
+        <li><strong>GitHub CLI (gh)</strong> — For all things GitHub from the terminal</li>
+        <li><strong>Warp</strong> — Modern terminal with AI features</li>
+        <li><strong>Astro</strong> — Powers this very website</li>
+      </ul>
+
+      <KolamDivider />
+
+      <h2>📋 Productivity</h2>
+      <ul>
+        <li><strong>Obsidian-style markdown notes</strong> — All my thinking in plain text</li>
+        <li><strong>GitHub Projects</strong> — Roadmap and sprint planning</li>
+        <li><strong>Kusto / Azure Data Explorer</strong> — Data analysis and support metrics</li>
+        <li><strong>Figma</strong> — Design exploration and prototyping</li>
+      </ul>
+
+      <KolamDivider />
+
+      <h2>🎨 Design & Writing</h2>
+      <ul>
+        <li><strong>Figma</strong> — UI design and wireframing</li>
+        <li><strong>Markdown</strong> — All long-form writing starts here</li>
+        <li><strong>Excalidraw</strong> — Quick diagrams and visual thinking</li>
+      </ul>
+
+      <KolamDivider />
+
+      <h2>🌐 This site</h2>
+      <ul>
+        <li><strong>Astro</strong> — Static site generator</li>
+        <li><strong>Tailwind CSS</strong> — Styling with custom warm design tokens</li>
+        <li><strong>Pagefind</strong> — Client-side search, built at deploy time</li>
+        <li><strong>GitHub Pages</strong> — Hosting</li>
+        <li><strong>GitHub Actions</strong> — CI/CD</li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>

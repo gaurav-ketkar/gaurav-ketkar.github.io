@@ -1,0 +1,88 @@
+---
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+import SearchModal from '../components/SearchModal.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+}
+
+const {
+  title,
+  description = 'Product Manager at GitHub. Thoughts on product craft, design, and building with intention.',
+  ogImage = '/og-image.png',
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- SEO -->
+    <title>{title} | Gaurav Ketkar</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={`${title} | Gaurav Ketkar`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site)} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@ketcomp" />
+    <meta name="twitter:title" content={`${title} | Gaurav Ketkar`} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(ogImage, Astro.site)} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- RSS -->
+    <link rel="alternate" type="application/rss+xml" title="Gaurav Ketkar's Blog" href="/rss.xml" />
+
+    <!-- Theme detection -->
+    <script is:inline>
+      const theme = (() => {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+          return localStorage.getItem('theme');
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      })();
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Navigation />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <Footer />
+    <SearchModal />
+
+    <!-- Scroll reveal -->
+    <script is:inline>
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    </script>
+  </body>
+</html>

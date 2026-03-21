@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import KolamDivider from '../components/KolamDivider.astro';
+---
+
+<BaseLayout title="Now" description="What I'm currently focused on — updated March 2026.">
+  <section class="page-container py-16 sm:py-24">
+    <div class="max-w-2xl reveal">
+      <h1 class="font-serif text-3xl sm:text-4xl font-bold text-umber-800 dark:text-cream-100 mb-4">
+        Now
+      </h1>
+      <p class="text-sm text-umber-500 dark:text-cream-500 mb-2">
+        Last updated: March 2026 · <a href="https://nownownow.com/about" target="_blank" rel="noopener noreferrer" class="text-saffron-500 hover:text-saffron-600 dark:text-saffron-400">What is this?</a>
+      </p>
+    </div>
+
+    <div class="prose prose-lg dark:prose-invert max-w-2xl mt-10">
+      <h2>🏗️ Building</h2>
+      <ul>
+        <li>
+          <strong>Project Nexus</strong> — Leading AI-powered ticket automation at GitHub. 
+          We're targeting 30% reduction in human ticket involvement for Security & Revenue queues. 
+          Currently refining bot persona decisions and per-category metric toggles.
+        </li>
+        <li>
+          <strong>FormCraft</strong> — Redesigning GitHub's support contact forms. Establishing 
+          CSAT baselines and driving improvements by sourcing design insights directly from 
+          support agents.
+        </li>
+        <li>
+          <strong>Support Portal</strong> — Cross-divisional work improving the partner support 
+          experience, navigating complexity across multiple environments.
+        </li>
+      </ul>
+
+      <KolamDivider />
+
+      <h2>📚 Learning</h2>
+      <ul>
+        <li>Deepening my understanding of AI evaluation frameworks and prompt engineering</li>
+        <li>Studying metric design — how to measure what <em>actually</em> matters to customers</li>
+        <li>Exploring design systems that balance comprehension with delight</li>
+      </ul>
+
+      <KolamDivider />
+
+      <h2>🎯 Working toward</h2>
+      <ul>
+        <li>Scaling my visibility — publishing strategy memos and thought leadership pieces</li>
+        <li>Mentoring junior PMs on our team</li>
+        <li>Initiating cross-divisional product initiatives (not just responding to them)</li>
+        <li>Building a portfolio of shipped, measured, and celebrated features</li>
+      </ul>
+
+      <KolamDivider />
+
+      <h2>🌱 Outside of work</h2>
+      <ul>
+        <li>Reading widely — currently exploring product leadership and design thinking</li>
+        <li>Restarting team design culture: Wednesday Watch parties and CSE Design Dojo</li>
+        <li>Building this very website</li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
