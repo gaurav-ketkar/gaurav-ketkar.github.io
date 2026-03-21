@@ -19,18 +19,26 @@ const projects = (await getCollection('projects'))
       </p>
     </div>
 
-    <div class="grid gap-5 sm:grid-cols-2">
-      {projects.map((project) => (
-        <div class="reveal">
-          <ProjectCard
-            title={project.data.title}
-            description={project.data.description}
-            status={project.data.status}
-            tags={project.data.tags}
-            url={project.data.url}
-          />
-        </div>
-      ))}
-    </div>
+    {projects.length > 0 ? (
+      <div class="grid gap-5 sm:grid-cols-2">
+        {projects.map((project) => (
+          <div class="reveal">
+            <ProjectCard
+              title={project.data.title}
+              description={project.data.description}
+              status={project.data.status}
+              tags={project.data.tags}
+              url={project.data.url}
+            />
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-20 reveal">
+        <p class="text-umber-500 dark:text-cream-500 text-lg">
+          Projects coming soon. Check back!
+        </p>
+      </div>
+    )}
   </section>
 </BaseLayout>
