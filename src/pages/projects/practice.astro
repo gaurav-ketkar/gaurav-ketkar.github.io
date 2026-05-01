@@ -1,0 +1,726 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Practice" description="Interactive guitar & ukulele chord practice tool — fretboard diagrams, progressions, songs, and exercise mode.">
+  <section class="page-container py-16 sm:py-24">
+    <!-- Header -->
+    <div class="max-w-4xl mx-auto mb-10 reveal">
+      <h1 class="font-serif text-3xl sm:text-4xl font-bold text-umber-800 dark:text-cream-100 mb-3">
+        Practice
+      </h1>
+      <p class="text-umber-600 dark:text-cream-400 leading-relaxed mb-6">
+        Interactive chord practice for guitar &amp; ukulele. Browse chords, learn progressions, play songs, and drill with exercise mode.
+      </p>
+
+      <!-- Instrument Toggle -->
+      <div class="inline-flex rounded-xl bg-cream-200 dark:bg-charcoal-700 p-1 gap-1" role="tablist" aria-label="Instrument">
+        <button id="btn-guitar" role="tab" aria-selected="true"
+          class="inst-btn px-5 py-2 rounded-lg text-sm font-medium transition-all bg-white dark:bg-charcoal-900 text-umber-800 dark:text-cream-100 shadow-sm">
+          🎸 Guitar
+        </button>
+        <button id="btn-ukulele" role="tab" aria-selected="false"
+          class="inst-btn px-5 py-2 rounded-lg text-sm font-medium transition-all text-umber-500 dark:text-cream-500 hover:text-umber-700 dark:hover:text-cream-300">
+          🪕 Ukulele
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="max-w-4xl mx-auto mb-8">
+      <div class="flex gap-1 overflow-x-auto border-b border-cream-300 dark:border-charcoal-700 pb-px" role="tablist" aria-label="Sections">
+        <button data-tab="chords" role="tab" aria-selected="true"
+          class="tab-btn whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-saffron-500 text-saffron-600 dark:text-saffron-400">
+          Chords
+        </button>
+        <button data-tab="progressions" role="tab" aria-selected="false"
+          class="tab-btn whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-transparent text-umber-500 dark:text-cream-500 hover:text-umber-700 dark:hover:text-cream-300">
+          Progressions
+        </button>
+        <button data-tab="songs" role="tab" aria-selected="false"
+          class="tab-btn whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-transparent text-umber-500 dark:text-cream-500 hover:text-umber-700 dark:hover:text-cream-300">
+          Songs
+        </button>
+        <button data-tab="exercise" role="tab" aria-selected="false"
+          class="tab-btn whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-transparent text-umber-500 dark:text-cream-500 hover:text-umber-700 dark:hover:text-cream-300">
+          Exercise
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Panels -->
+    <div class="max-w-4xl mx-auto">
+      <!-- Chords Panel -->
+      <div id="panel-chords" role="tabpanel" class="tab-panel">
+        <div id="chord-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+      </div>
+
+      <!-- Progressions Panel -->
+      <div id="panel-progressions" role="tabpanel" class="tab-panel hidden">
+        <div id="prog-list" class="space-y-6"></div>
+      </div>
+
+      <!-- Songs Panel -->
+      <div id="panel-songs" role="tabpanel" class="tab-panel hidden">
+        <!-- Genre Filter -->
+        <div class="flex gap-2 mb-6">
+          <button data-genre="all" class="genre-btn px-3 py-1.5 rounded-lg text-sm font-medium bg-saffron-500 text-white">All</button>
+          <button data-genre="Hindi" class="genre-btn px-3 py-1.5 rounded-lg text-sm font-medium bg-cream-200 dark:bg-charcoal-700 text-umber-600 dark:text-cream-400">Hindi</button>
+          <button data-genre="English" class="genre-btn px-3 py-1.5 rounded-lg text-sm font-medium bg-cream-200 dark:bg-charcoal-700 text-umber-600 dark:text-cream-400">English</button>
+        </div>
+        <div id="song-list" class="space-y-4"></div>
+      </div>
+
+      <!-- Exercise Panel -->
+      <div id="panel-exercise" role="tabpanel" class="tab-panel hidden">
+        <!-- Setup -->
+        <div id="exercise-setup">
+          <div class="grid sm:grid-cols-2 gap-6 mb-8">
+            <div>
+              <label class="block text-sm font-medium text-umber-700 dark:text-cream-300 mb-2">Progression</label>
+              <select id="ex-progression" class="w-full rounded-lg border border-cream-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-umber-800 dark:text-cream-100 px-3 py-2 text-sm focus:ring-2 focus:ring-saffron-500 focus:border-saffron-500">
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-umber-700 dark:text-cream-300 mb-2">
+                Seconds per chord: <span id="ex-speed-val" class="text-saffron-500 font-semibold">3</span>
+              </label>
+              <input id="ex-speed" type="range" min="1" max="8" value="3" step="0.5"
+                class="w-full accent-saffron-500" />
+            </div>
+          </div>
+          <div class="flex gap-3 mb-8">
+            <label class="flex items-center gap-2 text-sm text-umber-600 dark:text-cream-400">
+              <input id="ex-loop" type="checkbox" checked class="rounded accent-saffron-500" /> Loop
+            </label>
+            <label class="flex items-center gap-2 text-sm text-umber-600 dark:text-cream-400">
+              <input id="ex-sound" type="checkbox" checked class="rounded accent-saffron-500" /> Click sound
+            </label>
+          </div>
+          <button id="ex-start"
+            class="px-6 py-3 rounded-xl bg-saffron-500 hover:bg-saffron-600 text-white font-semibold transition-colors shadow-sm">
+            ▶ Start Exercise
+          </button>
+        </div>
+
+        <!-- Active Exercise -->
+        <div id="exercise-active" class="hidden text-center">
+          <div class="relative inline-block mb-6">
+            <svg id="ex-ring" width="280" height="280" class="mx-auto">
+              <circle cx="140" cy="140" r="130" fill="none" stroke="currentColor" stroke-width="4" opacity="0.1" />
+              <circle id="ex-ring-progress" cx="140" cy="140" r="130"
+                fill="none" stroke-width="6" stroke-linecap="round"
+                class="text-saffron-500"
+                stroke="currentColor"
+                stroke-dasharray="816.81"
+                stroke-dashoffset="0"
+                transform="rotate(-90 140 140)" />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <div id="ex-chord-name" class="font-serif text-4xl sm:text-5xl font-bold text-umber-800 dark:text-cream-100 mb-2"></div>
+              <div id="ex-chord-svg" class="chord-diagram"></div>
+            </div>
+          </div>
+          <!-- Progression steps -->
+          <div id="ex-steps" class="flex flex-wrap justify-center gap-2 mb-6"></div>
+          <!-- Next chord preview -->
+          <div id="ex-next" class="text-sm text-umber-500 dark:text-cream-500 mb-6"></div>
+          <div class="flex justify-center gap-3">
+            <button id="ex-pause" class="px-5 py-2.5 rounded-xl bg-turmeric-400 hover:bg-turmeric-500 text-white font-semibold transition-colors">
+              ⏸ Pause
+            </button>
+            <button id="ex-stop" class="px-5 py-2.5 rounded-xl bg-umber-500 hover:bg-umber-600 text-white font-semibold transition-colors">
+              ⏹ Stop
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .chord-diagram {
+    --dot-fill: #3B2316;
+    --dot-text: #FFFCF9;
+    --line-color: #c5b1a0;
+    --nut-color: #3B2316;
+    --label-color: #8a6e58;
+    --open-color: #a68a73;
+  }
+  :global(.dark) .chord-diagram {
+    --dot-fill: #e88a63;
+    --dot-text: #1C1614;
+    --line-color: #B8A48E;
+    --nut-color: #E8DDD3;
+    --label-color: #B8A48E;
+    --open-color: #D4C4B2;
+  }
+  .chord-card {
+    @apply rounded-xl border border-cream-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 p-4 flex flex-col items-center transition-shadow hover:shadow-md;
+  }
+  .chord-card h3 {
+    @apply font-serif text-lg font-bold text-umber-800 dark:text-cream-100 mb-1;
+  }
+  .chord-card .chord-type {
+    @apply text-xs text-umber-400 dark:text-cream-500 mb-2;
+  }
+  .prog-card {
+    @apply rounded-xl border border-cream-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 p-5 transition-shadow hover:shadow-md;
+  }
+  .song-card {
+    @apply rounded-xl border border-cream-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 p-5 transition-shadow hover:shadow-md;
+  }
+  .ex-step {
+    @apply px-3 py-1.5 rounded-lg text-sm font-semibold transition-all;
+  }
+  .ex-step.active {
+    @apply bg-saffron-500 text-white scale-110;
+  }
+  .ex-step.done {
+    @apply bg-cream-300 dark:bg-charcoal-700 text-umber-500 dark:text-cream-400;
+  }
+  .ex-step.upcoming {
+    @apply bg-cream-200 dark:bg-charcoal-700 text-umber-400 dark:text-cream-500;
+  }
+</style>
+
+<script>
+  // ═══════════════════════════════════════════════════════════════
+  // CHORD DATA
+  // ═══════════════════════════════════════════════════════════════
+  // Guitar: [E A D G B e] — 6 strings, frets: -1=mute, 0=open
+  // Ukulele: [G C E A] — 4 strings
+
+  const GUITAR_CHORDS = {
+    'C':     { frets: [-1,3,2,0,1,0],  fingers: [0,3,2,0,1,0],  type: 'Major' },
+    'D':     { frets: [-1,-1,0,2,3,2], fingers: [0,0,0,1,3,2],  type: 'Major' },
+    'E':     { frets: [0,2,2,1,0,0],   fingers: [0,2,3,1,0,0],  type: 'Major' },
+    'F':     { frets: [-1,-1,3,2,1,1], fingers: [0,0,3,2,1,1],  type: 'Major', barres: [{fret:1, from:4, to:5}] },
+    'G':     { frets: [3,2,0,0,0,3],   fingers: [2,1,0,0,0,3],  type: 'Major' },
+    'A':     { frets: [-1,0,2,2,2,0],  fingers: [0,0,1,2,3,0],  type: 'Major' },
+    'Dm':    { frets: [-1,-1,0,2,3,1], fingers: [0,0,0,2,3,1],  type: 'Minor' },
+    'Em':    { frets: [0,2,2,0,0,0],   fingers: [0,2,3,0,0,0],  type: 'Minor' },
+    'Am':    { frets: [-1,0,2,2,1,0],  fingers: [0,0,2,3,1,0],  type: 'Minor' },
+    'Bm':    { frets: [-1,2,4,4,3,2],  fingers: [0,1,3,4,2,1],  type: 'Minor', baseFret: 2, barres: [{fret:2, from:1, to:5}] },
+    'A7':    { frets: [-1,0,2,0,2,0],  fingers: [0,0,1,0,2,0],  type: '7th' },
+    'B7':    { frets: [-1,2,1,2,0,2],  fingers: [0,2,1,3,0,4],  type: '7th' },
+    'C7':    { frets: [-1,3,2,3,1,0],  fingers: [0,3,2,4,1,0],  type: '7th' },
+    'D7':    { frets: [-1,-1,0,2,1,2], fingers: [0,0,0,2,1,3],  type: '7th' },
+    'E7':    { frets: [0,2,0,1,0,0],   fingers: [0,2,0,1,0,0],  type: '7th' },
+    'G7':    { frets: [3,2,0,0,0,1],   fingers: [3,2,0,0,0,1],  type: '7th' },
+    'Fmaj7': { frets: [-1,-1,3,2,1,0], fingers: [0,0,3,2,1,0],  type: 'Other' },
+    'Cadd9': { frets: [-1,3,2,0,3,0],  fingers: [0,2,1,0,3,0],  type: 'Other' },
+  };
+
+  const UKE_CHORDS = {
+    'C':     { frets: [0,0,0,3],   fingers: [0,0,0,3],   type: 'Major' },
+    'D':     { frets: [2,2,2,0],   fingers: [1,2,3,0],   type: 'Major' },
+    'E':     { frets: [1,4,0,2],   fingers: [1,4,0,2],   type: 'Major' },
+    'F':     { frets: [2,0,1,0],   fingers: [2,0,1,0],   type: 'Major' },
+    'G':     { frets: [0,2,3,2],   fingers: [0,1,3,2],   type: 'Major' },
+    'A':     { frets: [2,1,0,0],   fingers: [2,1,0,0],   type: 'Major' },
+    'Bb':    { frets: [3,2,1,1],   fingers: [4,3,1,2],   type: 'Major' },
+    'Dm':    { frets: [2,2,1,0],   fingers: [2,3,1,0],   type: 'Minor' },
+    'Em':    { frets: [0,4,3,2],   fingers: [0,3,2,1],   type: 'Minor' },
+    'Am':    { frets: [2,0,0,0],   fingers: [1,0,0,0],   type: 'Minor' },
+    'A7':    { frets: [0,1,0,0],   fingers: [0,1,0,0],   type: '7th' },
+    'B7':    { frets: [2,3,2,2],   fingers: [1,3,2,1],   type: '7th', barres: [{fret:2, from:0, to:3}] },
+    'C7':    { frets: [0,0,0,1],   fingers: [0,0,0,1],   type: '7th' },
+    'D7':    { frets: [2,2,2,3],   fingers: [1,1,1,2],   type: '7th' },
+    'E7':    { frets: [1,2,0,2],   fingers: [1,2,0,3],   type: '7th' },
+    'G7':    { frets: [0,2,1,2],   fingers: [0,2,1,3],   type: '7th' },
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // PROGRESSIONS
+  // ═══════════════════════════════════════════════════════════════
+
+  const PROGRESSIONS = [
+    { name: 'Pop (I–V–vi–IV)', formula: 'I–V–vi–IV',
+      keys: { C: ['C','G','Am','F'], G: ['G','D','Em','C'], D: ['D','A','Bm','G'] } },
+    { name: '50s (I–vi–IV–V)', formula: 'I–vi–IV–V',
+      keys: { C: ['C','Am','F','G'], G: ['G','Em','C','D'], A: ['A','Am','D','E'] } },
+    { name: 'Axis (vi–IV–I–V)', formula: 'vi–IV–I–V',
+      keys: { C: ['Am','F','C','G'], G: ['Em','C','G','D'] } },
+    { name: 'Classic Rock (I–IV–V–I)', formula: 'I–IV–V–I',
+      keys: { C: ['C','F','G','C'], G: ['G','C','D','G'], A: ['A','D','E','A'] } },
+    { name: 'Jazz ii–V–I', formula: 'ii–V–I',
+      keys: { C: ['Dm','G','C'], G: ['Am','D','G'] } },
+    { name: 'Folk (I–IV–vi–V)', formula: 'I–IV–vi–V',
+      keys: { C: ['C','F','Am','G'], G: ['G','C','Em','D'] } },
+    { name: 'Melancholic (i–VI–III–VII)', formula: 'i–VI–III–VII',
+      keys: { Am: ['Am','F','C','G'], Em: ['Em','C','G','D'] } },
+    { name: '12-Bar Blues', formula: 'I–I–I–I–IV–IV–I–I–V–IV–I–V',
+      keys: { A: ['A','A','A','A','D','D','A','A','E','D','A','E'], E: ['E','E','E','E','A','A','E','E','B7','A','E','B7'] } },
+  ];
+
+  // ═══════════════════════════════════════════════════════════════
+  // SONGS
+  // ═══════════════════════════════════════════════════════════════
+
+  const SONGS = [
+    { title: 'Tum Hi Ho', artist: 'Arijit Singh', genre: 'Hindi', chords: ['Em','C','G','D'], strumming: 'D DU UDU' },
+    { title: 'Kal Ho Naa Ho', artist: 'Sonu Nigam', genre: 'Hindi', chords: ['C','G','Am','F'], strumming: 'D DU UDU' },
+    { title: 'Channa Mereya', artist: 'Arijit Singh', genre: 'Hindi', chords: ['Am','F','C','G'], strumming: 'DD UDU' },
+    { title: 'Tera Ban Jaunga', artist: 'Akhil Sachdeva', genre: 'Hindi', chords: ['G','Em','C','D'], strumming: 'D DU UDU' },
+    { title: 'Tujhe Kitna Chahne Lage', artist: 'Arijit Singh', genre: 'Hindi', chords: ['Am','F','C','G'], strumming: 'D DU UDU' },
+    { title: 'Hasi Ban Gaye', artist: 'Ami Mishra', genre: 'Hindi', chords: ['C','Am','F','G'], strumming: 'DD UDU' },
+    { title: 'Somewhere Over the Rainbow', artist: 'Israel Kamakawiwoʻole', genre: 'English', chords: ['C','Em','Am','F','G'], strumming: 'D DU UDU', note: 'Ukulele classic' },
+    { title: 'Riptide', artist: 'Vance Joy', genre: 'English', chords: ['Am','G','C'], strumming: 'D DU UDU' },
+    { title: 'Let It Be', artist: 'The Beatles', genre: 'English', chords: ['C','G','Am','F'], strumming: 'D DU UDU' },
+    { title: "I'm Yours", artist: 'Jason Mraz', genre: 'English', chords: ['C','G','Am','F'], strumming: 'D DU UDU', note: 'Great for ukulele' },
+    { title: 'Stand By Me', artist: 'Ben E. King', genre: 'English', chords: ['C','Am','F','G'], strumming: 'D D DU' },
+    { title: 'Perfect', artist: 'Ed Sheeran', genre: 'English', chords: ['G','Em','C','D'], strumming: 'D DU UDU' },
+  ];
+
+  // ═══════════════════════════════════════════════════════════════
+  // STATE
+  // ═══════════════════════════════════════════════════════════════
+
+  let instrument = 'guitar';
+  let activeTab = 'chords';
+  let songFilter = 'all';
+
+  // Exercise state
+  let exState = { running: false, paused: false, chords: [], idx: 0, timer: 0, startTime: 0, duration: 3000, loop: true, sound: true, animFrame: 0 };
+
+  function getChords() { return instrument === 'guitar' ? GUITAR_CHORDS : UKE_CHORDS; }
+  function getStringCount() { return instrument === 'guitar' ? 6 : 4; }
+
+  // ═══════════════════════════════════════════════════════════════
+  // SVG CHORD RENDERER
+  // ═══════════════════════════════════════════════════════════════
+
+  function renderChordSVG(chordName, scale = 1) {
+    const chords = getChords();
+    const chord = chords[chordName];
+    if (!chord) return `<span class="text-xs text-umber-400 dark:text-cream-500">${chordName}</span>`;
+
+    const strings = getStringCount();
+    const ss = 18 * scale;  // string spacing
+    const fs = 22 * scale;  // fret spacing
+    const numFrets = 4;
+    const pTop = 28 * scale;
+    const pLeft = 20 * scale;
+    const pRight = 12 * scale;
+    const pBot = 6 * scale;
+    const dotR = 7 * scale;
+    const fontSize = 10 * scale;
+    const baseFret = chord.baseFret || 1;
+
+    const gw = (strings - 1) * ss;
+    const gh = numFrets * fs;
+    const w = pLeft + gw + pRight;
+    const h = pTop + gh + pBot;
+
+    const parts = [];
+    parts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="chord-diagram">`);
+
+    // Nut
+    if (baseFret === 1) {
+      parts.push(`<rect x="${pLeft - 1}" y="${pTop - 2.5}" width="${gw + 2}" height="${4 * scale}" rx="1" fill="var(--nut-color)"/>`);
+    }
+
+    // Frets
+    for (let i = 0; i <= numFrets; i++) {
+      const y = pTop + i * fs;
+      parts.push(`<line x1="${pLeft}" y1="${y}" x2="${pLeft + gw}" y2="${y}" stroke="var(--line-color)" stroke-width="${1.2 * scale}"/>`);
+    }
+
+    // Strings
+    for (let i = 0; i < strings; i++) {
+      const x = pLeft + i * ss;
+      parts.push(`<line x1="${x}" y1="${pTop}" x2="${x}" y2="${pTop + gh}" stroke="var(--line-color)" stroke-width="${1.2 * scale}"/>`);
+    }
+
+    // Barres
+    if (chord.barres) {
+      for (const b of chord.barres) {
+        const adjFret = b.fret - baseFret + 1;
+        if (adjFret >= 1 && adjFret <= numFrets) {
+          const y = pTop + (adjFret - 0.5) * fs;
+          const x1 = pLeft + b.from * ss;
+          const x2 = pLeft + b.to * ss;
+          parts.push(`<rect x="${x1 - dotR}" y="${y - dotR}" width="${x2 - x1 + dotR * 2}" height="${dotR * 2}" rx="${dotR}" fill="var(--dot-fill)" opacity="0.6"/>`);
+        }
+      }
+    }
+
+    // Finger dots & open/mute markers
+    for (let i = 0; i < strings; i++) {
+      const x = pLeft + i * ss;
+      const fret = chord.frets[i];
+      const finger = chord.fingers[i];
+
+      if (fret === -1) {
+        parts.push(`<text x="${x}" y="${pTop - 8 * scale}" text-anchor="middle" font-size="${fontSize}" fill="var(--label-color)" font-weight="500">✕</text>`);
+      } else if (fret === 0) {
+        parts.push(`<circle cx="${x}" cy="${pTop - 10 * scale}" r="${4 * scale}" fill="none" stroke="var(--open-color)" stroke-width="${1.5 * scale}"/>`);
+      } else {
+        const adjFret = fret - baseFret + 1;
+        if (adjFret >= 1 && adjFret <= numFrets) {
+          const y = pTop + (adjFret - 0.5) * fs;
+          parts.push(`<circle cx="${x}" cy="${y}" r="${dotR}" fill="var(--dot-fill)"/>`);
+          if (finger > 0) {
+            parts.push(`<text x="${x}" y="${y + fontSize * 0.35}" text-anchor="middle" font-size="${fontSize}" font-weight="700" fill="var(--dot-text)" style="pointer-events:none">${finger}</text>`);
+          }
+        }
+      }
+    }
+
+    // Base fret label
+    if (baseFret > 1) {
+      const y = pTop + fs * 0.5;
+      parts.push(`<text x="${pLeft - 10 * scale}" y="${y + fontSize * 0.35}" text-anchor="end" font-size="${fontSize * 0.85}" fill="var(--label-color)">${baseFret}fr</text>`);
+    }
+
+    parts.push(`</svg>`);
+    return parts.join('');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // TAB MANAGEMENT
+  // ═══════════════════════════════════════════════════════════════
+
+  const tabBtns = document.querySelectorAll<HTMLButtonElement>('.tab-btn');
+  const tabPanels = document.querySelectorAll<HTMLDivElement>('.tab-panel');
+
+  function switchTab(tab: string) {
+    activeTab = tab;
+    tabBtns.forEach(b => {
+      const isActive = b.dataset.tab === tab;
+      b.classList.toggle('border-saffron-500', isActive);
+      b.classList.toggle('text-saffron-600', isActive);
+      b.classList.toggle('dark:text-saffron-400', isActive);
+      b.classList.toggle('border-transparent', !isActive);
+      b.classList.toggle('text-umber-500', !isActive);
+      b.classList.toggle('dark:text-cream-500', !isActive);
+      b.setAttribute('aria-selected', String(isActive));
+    });
+    tabPanels.forEach(p => {
+      p.classList.toggle('hidden', !p.id.endsWith(tab));
+    });
+    if (tab === 'exercise') populateExerciseSelect();
+  }
+
+  tabBtns.forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab!)));
+
+  // ═══════════════════════════════════════════════════════════════
+  // INSTRUMENT TOGGLE
+  // ═══════════════════════════════════════════════════════════════
+
+  const instBtns = document.querySelectorAll<HTMLButtonElement>('.inst-btn');
+  function switchInstrument(inst: string) {
+    instrument = inst;
+    instBtns.forEach(b => {
+      const isActive = b.id === `btn-${inst}`;
+      b.classList.toggle('bg-white', isActive);
+      b.classList.toggle('dark:bg-charcoal-900', isActive);
+      b.classList.toggle('text-umber-800', isActive);
+      b.classList.toggle('dark:text-cream-100', isActive);
+      b.classList.toggle('shadow-sm', isActive);
+      b.classList.toggle('text-umber-500', !isActive);
+      b.classList.toggle('dark:text-cream-500', !isActive);
+      b.setAttribute('aria-selected', String(isActive));
+    });
+    stopExercise();
+    renderAll();
+  }
+
+  document.getElementById('btn-guitar')!.addEventListener('click', () => switchInstrument('guitar'));
+  document.getElementById('btn-ukulele')!.addEventListener('click', () => switchInstrument('ukulele'));
+
+  // ═══════════════════════════════════════════════════════════════
+  // RENDER: CHORDS TAB
+  // ═══════════════════════════════════════════════════════════════
+
+  function renderChords() {
+    const chords = getChords();
+    const grid = document.getElementById('chord-grid')!;
+    const groups: Record<string, string[]> = { Major: [], Minor: [], '7th': [], Other: [] };
+    for (const [name, data] of Object.entries(chords)) {
+      const t = (data as any).type || 'Other';
+      (groups[t] || groups.Other).push(name);
+    }
+
+    let html = '';
+    for (const [groupName, names] of Object.entries(groups)) {
+      if (names.length === 0) continue;
+      html += `<div class="col-span-full mt-4 first:mt-0"><h2 class="font-serif text-lg font-semibold text-umber-700 dark:text-cream-200 mb-2">${groupName}</h2></div>`;
+      for (const name of names) {
+        html += `
+          <div class="chord-card">
+            <h3>${name}</h3>
+            ${renderChordSVG(name)}
+          </div>`;
+      }
+    }
+    grid.innerHTML = html;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // RENDER: PROGRESSIONS TAB
+  // ═══════════════════════════════════════════════════════════════
+
+  function renderProgressions() {
+    const container = document.getElementById('prog-list')!;
+    let html = '';
+    for (const prog of PROGRESSIONS) {
+      html += `<div class="prog-card">`;
+      html += `<h3 class="font-serif text-lg font-bold text-umber-800 dark:text-cream-100 mb-1">${prog.name}</h3>`;
+      html += `<p class="text-xs text-umber-400 dark:text-cream-500 mb-4">${prog.formula}</p>`;
+
+      for (const [key, chords] of Object.entries(prog.keys)) {
+        html += `<div class="mb-4 last:mb-0">`;
+        html += `<div class="flex items-center gap-2 mb-2"><span class="text-sm font-semibold text-umber-600 dark:text-cream-300">Key of ${key}</span>`;
+        html += `<button class="practice-prog text-xs px-2.5 py-1 rounded-lg bg-saffron-100 dark:bg-saffron-900/20 text-saffron-600 dark:text-saffron-400 hover:bg-saffron-200 dark:hover:bg-saffron-900/40 transition-colors font-medium" data-chords='${JSON.stringify(chords)}'>Practice →</button>`;
+        html += `</div>`;
+        html += `<div class="flex flex-wrap gap-3 items-end">`;
+        for (const c of chords as string[]) {
+          html += `<div class="flex flex-col items-center">`;
+          html += `<span class="text-xs font-semibold text-umber-600 dark:text-cream-300 mb-1">${c}</span>`;
+          html += renderChordSVG(c, 0.85);
+          html += `</div>`;
+        }
+        html += `</div></div>`;
+      }
+      html += `</div>`;
+    }
+    container.innerHTML = html;
+
+    // Attach practice buttons
+    container.querySelectorAll<HTMLButtonElement>('.practice-prog').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const chords = JSON.parse(btn.dataset.chords!);
+        launchExercise(chords);
+      });
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // RENDER: SONGS TAB
+  // ═══════════════════════════════════════════════════════════════
+
+  function renderSongs() {
+    const container = document.getElementById('song-list')!;
+    const filtered = songFilter === 'all' ? SONGS : SONGS.filter(s => s.genre === songFilter);
+
+    let html = '';
+    for (const song of filtered) {
+      html += `<div class="song-card">`;
+      html += `<div class="flex flex-wrap items-start justify-between gap-2 mb-3">`;
+      html += `<div>`;
+      html += `<h3 class="font-serif text-lg font-bold text-umber-800 dark:text-cream-100">${song.title}</h3>`;
+      html += `<p class="text-sm text-umber-500 dark:text-cream-400">${song.artist}</p>`;
+      html += `</div>`;
+      html += `<div class="flex gap-2 items-center">`;
+      html += `<span class="text-xs px-2 py-0.5 rounded-full bg-cream-200 dark:bg-charcoal-700 text-umber-500 dark:text-cream-400">${song.genre}</span>`;
+      html += `<button class="practice-song text-xs px-2.5 py-1 rounded-lg bg-saffron-100 dark:bg-saffron-900/20 text-saffron-600 dark:text-saffron-400 hover:bg-saffron-200 dark:hover:bg-saffron-900/40 transition-colors font-medium" data-chords='${JSON.stringify(song.chords)}'>Practice →</button>`;
+      html += `</div></div>`;
+
+      if (song.note) {
+        html += `<p class="text-xs text-turmeric-500 dark:text-turmeric-400 mb-2">✦ ${song.note}</p>`;
+      }
+
+      html += `<div class="flex items-center gap-2 mb-3"><span class="text-xs text-umber-400 dark:text-cream-500">Strumming:</span><code class="text-xs font-mono bg-cream-200 dark:bg-charcoal-700 px-2 py-0.5 rounded text-umber-700 dark:text-cream-200">${song.strumming}</code></div>`;
+
+      html += `<div class="flex flex-wrap gap-3 items-end">`;
+      for (const c of song.chords) {
+        html += `<div class="flex flex-col items-center">`;
+        html += `<span class="text-xs font-semibold text-umber-600 dark:text-cream-300 mb-1">${c}</span>`;
+        html += renderChordSVG(c, 0.85);
+        html += `</div>`;
+      }
+      html += `</div></div>`;
+    }
+    container.innerHTML = html;
+
+    container.querySelectorAll<HTMLButtonElement>('.practice-song').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const chords = JSON.parse(btn.dataset.chords!);
+        launchExercise(chords);
+      });
+    });
+  }
+
+  // Genre filter buttons
+  document.querySelectorAll<HTMLButtonElement>('.genre-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      songFilter = btn.dataset.genre!;
+      document.querySelectorAll('.genre-btn').forEach(b => {
+        const isActive = b === btn;
+        b.classList.toggle('bg-saffron-500', isActive);
+        b.classList.toggle('text-white', isActive);
+        b.classList.toggle('bg-cream-200', !isActive);
+        b.classList.toggle('dark:bg-charcoal-700', !isActive);
+        b.classList.toggle('text-umber-600', !isActive);
+        b.classList.toggle('dark:text-cream-400', !isActive);
+      });
+      renderSongs();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  // EXERCISE MODE
+  // ═══════════════════════════════════════════════════════════════
+
+  const RING_CIRCUMFERENCE = 2 * Math.PI * 130;
+
+  function populateExerciseSelect() {
+    const sel = document.getElementById('ex-progression') as HTMLSelectElement;
+    let html = '<optgroup label="Progressions">';
+    for (const prog of PROGRESSIONS) {
+      for (const [key, chords] of Object.entries(prog.keys)) {
+        const val = JSON.stringify(chords);
+        html += `<option value='${val}'>${prog.name} — Key of ${key} (${(chords as string[]).join(' → ')})</option>`;
+      }
+    }
+    html += '</optgroup><optgroup label="Songs">';
+    for (const song of SONGS) {
+      const val = JSON.stringify(song.chords);
+      html += `<option value='${val}'>${song.title} — ${song.artist} (${song.chords.join(' → ')})</option>`;
+    }
+    html += '</optgroup>';
+    sel.innerHTML = html;
+  }
+
+  // Speed slider
+  const speedSlider = document.getElementById('ex-speed') as HTMLInputElement;
+  const speedVal = document.getElementById('ex-speed-val')!;
+  speedSlider.addEventListener('input', () => { speedVal.textContent = speedSlider.value; });
+
+  // Audio click
+  let audioCtx: AudioContext | null = null;
+  function playClick() {
+    if (!exState.sound) return;
+    if (!audioCtx) audioCtx = new AudioContext();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 880;
+    gain.gain.value = 0.15;
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+    osc.stop(audioCtx.currentTime + 0.08);
+  }
+
+  function launchExercise(chords: string[]) {
+    switchTab('exercise');
+    const sel = document.getElementById('ex-progression') as HTMLSelectElement;
+    // Try to select matching option
+    const target = JSON.stringify(chords);
+    for (const opt of sel.options) {
+      if (opt.value === target) { sel.value = target; break; }
+    }
+    startExercise(chords);
+  }
+
+  function startExercise(chords?: string[]) {
+    const sel = document.getElementById('ex-progression') as HTMLSelectElement;
+    const chosen = chords || JSON.parse(sel.value);
+
+    exState.chords = chosen;
+    exState.idx = 0;
+    exState.duration = parseFloat(speedSlider.value) * 1000;
+    exState.loop = (document.getElementById('ex-loop') as HTMLInputElement).checked;
+    exState.sound = (document.getElementById('ex-sound') as HTMLInputElement).checked;
+    exState.running = true;
+    exState.paused = false;
+    exState.startTime = performance.now();
+
+    document.getElementById('exercise-setup')!.classList.add('hidden');
+    document.getElementById('exercise-active')!.classList.remove('hidden');
+
+    renderExerciseSteps();
+    renderExerciseChord();
+    playClick();
+    exState.animFrame = requestAnimationFrame(exerciseTick);
+  }
+
+  function exerciseTick(now: number) {
+    if (!exState.running) return;
+    if (exState.paused) { exState.animFrame = requestAnimationFrame(exerciseTick); return; }
+
+    const elapsed = now - exState.startTime;
+    const progress = Math.min(elapsed / exState.duration, 1);
+
+    // Update ring
+    const ring = document.getElementById('ex-ring-progress')!;
+    ring.setAttribute('stroke-dashoffset', String(RING_CIRCUMFERENCE * (1 - progress)));
+
+    if (progress >= 1) {
+      // Next chord
+      exState.idx++;
+      if (exState.idx >= exState.chords.length) {
+        if (exState.loop) {
+          exState.idx = 0;
+        } else {
+          stopExercise();
+          return;
+        }
+      }
+      exState.startTime = now;
+      renderExerciseChord();
+      renderExerciseSteps();
+      playClick();
+    }
+
+    exState.animFrame = requestAnimationFrame(exerciseTick);
+  }
+
+  function renderExerciseChord() {
+    const name = exState.chords[exState.idx];
+    document.getElementById('ex-chord-name')!.textContent = name;
+    document.getElementById('ex-chord-svg')!.innerHTML = renderChordSVG(name, 1.3);
+
+    const nextIdx = (exState.idx + 1) % exState.chords.length;
+    const nextName = exState.chords[nextIdx];
+    document.getElementById('ex-next')!.textContent = exState.idx + 1 < exState.chords.length || exState.loop
+      ? `Next: ${nextName}` : '';
+  }
+
+  function renderExerciseSteps() {
+    const container = document.getElementById('ex-steps')!;
+    container.innerHTML = exState.chords.map((c, i) => {
+      const cls = i === exState.idx ? 'active' : i < exState.idx ? 'done' : 'upcoming';
+      return `<span class="ex-step ${cls}">${c}</span>`;
+    }).join('');
+  }
+
+  function pauseExercise() {
+    exState.paused = !exState.paused;
+    if (!exState.paused) {
+      exState.startTime = performance.now() - (exState.duration * (1 - parseFloat(document.getElementById('ex-ring-progress')!.getAttribute('stroke-dashoffset')!) / RING_CIRCUMFERENCE));
+    }
+    const btn = document.getElementById('ex-pause')!;
+    btn.textContent = exState.paused ? '▶ Resume' : '⏸ Pause';
+  }
+
+  function stopExercise() {
+    exState.running = false;
+    exState.paused = false;
+    cancelAnimationFrame(exState.animFrame);
+    document.getElementById('exercise-setup')!.classList.remove('hidden');
+    document.getElementById('exercise-active')!.classList.add('hidden');
+    document.getElementById('ex-pause')!.textContent = '⏸ Pause';
+  }
+
+  document.getElementById('ex-start')!.addEventListener('click', () => startExercise());
+  document.getElementById('ex-pause')!.addEventListener('click', pauseExercise);
+  document.getElementById('ex-stop')!.addEventListener('click', stopExercise);
+
+  // ═══════════════════════════════════════════════════════════════
+  // RENDER ALL
+  // ═══════════════════════════════════════════════════════════════
+
+  function renderAll() {
+    renderChords();
+    renderProgressions();
+    renderSongs();
+    populateExerciseSelect();
+  }
+
+  renderAll();
+</script>
