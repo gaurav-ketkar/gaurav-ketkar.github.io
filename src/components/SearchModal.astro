@@ -1,6 +1,8 @@
 ---
 ---
 
+<link rel="stylesheet" href="/pagefind/pagefind-ui.css" />
+
 <!-- Search modal backdrop -->
 <div id="search-modal" class="hidden fixed inset-0 z-[100]">
   <!-- Backdrop -->
@@ -15,16 +17,48 @@
 </div>
 
 <script is:inline>
+  // Initialize PagefindUI
+  let pagefindLoaded = false;
+  function loadPagefind() {
+    if (pagefindLoaded) return;
+    pagefindLoaded = true;
+
+    // If already available (script loaded previously)
+    if (typeof PagefindUI !== 'undefined') {
+      initPagefind();
+      return;
+    }
+
+    var script = document.createElement('script');
+    script.src = '/pagefind/pagefind-ui.js';
+    script.onload = function() { initPagefind(); };
+    script.onerror = function() {
+      document.getElementById('pagefind-container').innerHTML =
+        '<p style="padding:1rem;opacity:0.5;text-align:center">Search index not available. Run a build first.</p>';
+    };
+    document.head.appendChild(script);
+  }
+
+  function initPagefind() {
+    if (typeof PagefindUI === 'undefined') return;
+    new PagefindUI({
+      element: '#pagefind-container',
+      showSubResults: true,
+      showImages: false,
+    });
+  }
+
   function openSearch() {
     const modal = document.getElementById('search-modal');
     if (modal) {
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
+      loadPagefind();
       // Focus the search input after a short delay
       setTimeout(() => {
         const input = modal.querySelector('input');
         if (input) input.focus();
-      }, 100);
+      }, 200);
     }
   }
 
