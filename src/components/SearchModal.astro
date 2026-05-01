@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="/pagefind/pagefind-ui.css" />
 
 <!-- Search modal backdrop -->
-<div id="search-modal" class="hidden fixed inset-0 z-[100]">
+<div id="search-modal" class="hidden fixed inset-0 z-[100]" role="dialog" aria-modal="true" aria-label="Search">
   <!-- Backdrop -->
   <div id="search-backdrop" class="absolute inset-0 bg-umber-900/40 dark:bg-black/60 backdrop-blur-sm"></div>
   
@@ -15,6 +15,27 @@
     </div>
   </div>
 </div>
+
+<style is:global>
+  /* Make entire search result rows clickable */
+  .pagefind-ui__result {
+    cursor: pointer;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    transition: background-color 150ms;
+  }
+  .pagefind-ui__result:hover,
+  .pagefind-ui__result.search-active {
+    background-color: rgba(199, 91, 57, 0.08);
+  }
+  .dark .pagefind-ui__result:hover,
+  .dark .pagefind-ui__result.search-active {
+    background-color: rgba(232, 138, 99, 0.12);
+  }
+  .pagefind-ui__result .pagefind-ui__result-link {
+    pointer-events: none;
+  }
+</style>
 
 <script is:inline>
   // Initialize PagefindUI
@@ -46,6 +67,22 @@
       showSubResults: true,
       showImages: false,
     });
+
+    // Make entire result rows clickable
+    var container = document.getElementById('pagefind-container');
+    var observer = new MutationObserver(function() {
+      var results = container.querySelectorAll('.pagefind-ui__result');
+      results.forEach(function(li) {
+        if (li.dataset.clickBound) return;
+        li.dataset.clickBound = 'true';
+        li.addEventListener('click', function(e) {
+          if (e.target.closest('.pagefind-ui__result-link')) return;
+          var link = li.querySelector('.pagefind-ui__result-link');
+          if (link) window.location.href = link.href;
+        });
+      });
+    });
+    observer.observe(container, { childList: true, subtree: true });
   }
 
   function openSearch() {
@@ -53,6 +90,7 @@
     if (modal) {
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
+      searchActiveIdx = -1;
       loadPagefind();
       // Focus the search input after a short delay
       setTimeout(() => {
@@ -77,21 +115,62 @@
   // Close on backdrop click
   document.getElementById('search-backdrop')?.addEventListener('click', closeSearch);
 
+  // Track active search result for arrow-key navigation
+  var searchActiveIdx = -1;
+
+  function getSearchResults() {
+    return Array.from(document.querySelectorAll('.pagefind-ui__result'));
+  }
+
+  function setSearchActive(idx) {
+    var results = getSearchResults();
+    results.forEach(function(r) { r.classList.remove('search-active'); });
+    searchActiveIdx = idx;
+    if (idx >= 0 && idx < results.length) {
+      results[idx].classList.add('search-active');
+      results[idx].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
   // Keyboard shortcuts
-  document.addEventListener('keydown', (e) => {
-    // Cmd+K / Ctrl+K to open
+  document.addEventListener('keydown', function(e) {
+    var modal = document.getElementById('search-modal');
+    var isOpen = modal && !modal.classList.contains('hidden');
+
+    // Cmd+K / Ctrl+K to open/close
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
-      const modal = document.getElementById('search-modal');
-      if (modal?.classList.contains('hidden')) {
-        openSearch();
-      } else {
-        closeSearch();
-      }
+      if (!isOpen) { openSearch(); } else { closeSearch(); }
+      return;
     }
+
+    if (!isOpen) return;
+
     // Escape to close
     if (e.key === 'Escape') {
       closeSearch();
+      searchActiveIdx = -1;
+      return;
+    }
+
+    // Arrow navigation through search results
+    var results = getSearchResults();
+    if (results.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSearchActive(Math.min(searchActiveIdx + 1, results.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSearchActive(Math.max(searchActiveIdx - 1, -1));
+      if (searchActiveIdx === -1) {
+        var input = modal.querySelector('input');
+        if (input) input.focus();
+      }
+    } else if (e.key === 'Enter' && searchActiveIdx >= 0 && searchActiveIdx < results.length) {
+      e.preventDefault();
+      var link = results[searchActiveIdx].querySelector('.pagefind-ui__result-link');
+      if (link) window.location.href = link.href;
     }
   });
 </script>

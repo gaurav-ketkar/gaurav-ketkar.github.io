@@ -29,19 +29,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <!-- Tab Bar -->
     <div class="max-w-4xl mx-auto mb-8">
       <div class="flex gap-1 overflow-x-auto border-b border-cream-300 dark:border-charcoal-700 pb-px" role="tablist" aria-label="Sections">
-        <button data-tab="chords" role="tab" aria-selected="true"
+        <button id="tab-chords" data-tab="chords" role="tab" aria-selected="true" aria-controls="panel-chords"
           class="tab-btn whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-saffron-500 text-saffron-600 dark:text-saffron-400">
           Chords
         </button>
-        <button data-tab="progressions" role="tab" aria-selected="false"
+        <button id="tab-progressions" data-tab="progressions" role="tab" aria-selected="false" aria-controls="panel-progressions"
           class="tab-btn whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-transparent text-umber-500 dark:text-cream-500 hover:text-umber-700 dark:hover:text-cream-300">
           Progressions
         </button>
-        <button data-tab="songs" role="tab" aria-selected="false"
+        <button id="tab-songs" data-tab="songs" role="tab" aria-selected="false" aria-controls="panel-songs"
           class="tab-btn whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-transparent text-umber-500 dark:text-cream-500 hover:text-umber-700 dark:hover:text-cream-300">
           Songs
         </button>
-        <button data-tab="exercise" role="tab" aria-selected="false"
+        <button id="tab-exercise" data-tab="exercise" role="tab" aria-selected="false" aria-controls="panel-exercise"
           class="tab-btn whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-transparent text-umber-500 dark:text-cream-500 hover:text-umber-700 dark:hover:text-cream-300">
           Exercise
         </button>
@@ -51,17 +51,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <!-- Tab Panels -->
     <div class="max-w-4xl mx-auto">
       <!-- Chords Panel -->
-      <div id="panel-chords" role="tabpanel" class="tab-panel">
+      <div id="panel-chords" role="tabpanel" aria-labelledby="tab-chords" class="tab-panel">
         <div id="chord-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
       </div>
 
       <!-- Progressions Panel -->
-      <div id="panel-progressions" role="tabpanel" class="tab-panel hidden">
+      <div id="panel-progressions" role="tabpanel" aria-labelledby="tab-progressions" class="tab-panel hidden">
         <div id="prog-list" class="space-y-6"></div>
       </div>
 
       <!-- Songs Panel -->
-      <div id="panel-songs" role="tabpanel" class="tab-panel hidden">
+      <div id="panel-songs" role="tabpanel" aria-labelledby="tab-songs" class="tab-panel hidden">
         <!-- Genre Filter -->
         <div class="flex gap-2 mb-6">
           <button data-genre="all" class="genre-btn px-3 py-1.5 rounded-lg text-sm font-medium bg-saffron-500 text-white">All</button>
@@ -72,7 +72,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </div>
 
       <!-- Exercise Panel -->
-      <div id="panel-exercise" role="tabpanel" class="tab-panel hidden">
+      <div id="panel-exercise" role="tabpanel" aria-labelledby="tab-exercise" class="tab-panel hidden">
         <!-- Setup -->
         <div id="exercise-setup">
           <div class="grid sm:grid-cols-2 gap-6 mb-8">
@@ -710,6 +710,62 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   document.getElementById('ex-start')!.addEventListener('click', () => startExercise());
   document.getElementById('ex-pause')!.addEventListener('click', pauseExercise);
   document.getElementById('ex-stop')!.addEventListener('click', stopExercise);
+
+  // ═══════════════════════════════════════════════════════════════
+  // KEYBOARD SHORTCUTS
+  // ═══════════════════════════════════════════════════════════════
+
+  const TAB_ORDER = ['chords', 'progressions', 'songs', 'exercise'];
+
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    // Don't capture when typing in inputs/selects
+    const tag = (e.target as HTMLElement).tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+
+    // Arrow Left/Right to switch tabs
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      const idx = TAB_ORDER.indexOf(activeTab);
+      if (idx === -1) return;
+      const next = e.key === 'ArrowRight'
+        ? TAB_ORDER[(idx + 1) % TAB_ORDER.length]
+        : TAB_ORDER[(idx - 1 + TAB_ORDER.length) % TAB_ORDER.length];
+      switchTab(next);
+      document.getElementById(`tab-${next}`)?.focus();
+      e.preventDefault();
+      return;
+    }
+
+    // Number keys 1-4 to jump to tabs
+    if (e.key >= '1' && e.key <= '4') {
+      const tab = TAB_ORDER[parseInt(e.key) - 1];
+      if (tab) { switchTab(tab); document.getElementById(`tab-${tab}`)?.focus(); }
+      e.preventDefault();
+      return;
+    }
+
+    // G/U to switch instrument
+    if (e.key === 'g' || e.key === 'G') {
+      switchInstrument('guitar');
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'u' || e.key === 'U') {
+      switchInstrument('ukulele');
+      e.preventDefault();
+      return;
+    }
+
+    // Space to start/pause exercise
+    if (e.key === ' ' && activeTab === 'exercise') {
+      e.preventDefault();
+      if (exState.running) {
+        pauseExercise();
+      } else {
+        startExercise();
+      }
+      return;
+    }
+  });
 
   // ═══════════════════════════════════════════════════════════════
   // RENDER ALL
