@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Cleaner</title>
+<style>
+:root {
+  --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #242424; --surface3: #2e2e2e;
+  --border: #333; --text: #e8e8e8; --text2: #999; --text3: #666;
+  --accent: #4f8ff7; --accent-dim: #2a4a8a;
+  --green: #34c759; --green-dim: #1a3a20;
+  --red: #ff453a; --red-dim: #3a1a1a;
+  --orange: #ff9f0a; --orange-dim: #3a2a0a;
+  --purple: #bf5af2; --purple-dim: #2a1a3a;
+  --r: 8px; --rl: 12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:var(--r);padding:6px 14px;font-size:13px;transition:all .15s}
+button:active{transform:scale(.97)}
+input,select{font-family:inherit;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;font-size:13px;outline:none}
+input:focus,select:focus{border-color:var(--accent)}
+.hidden{display:none !important}
+kbd{display:inline-block;background:var(--surface3);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:11px;color:var(--text2);margin-left:4px;font-family:monospace}
+
+/* ---- Upload Screen ---- */
+#upload-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px}
+#upload-screen h1{font-size:32px;font-weight:700;margin-bottom:8px}
+#upload-screen .sub{color:var(--text2);margin-bottom:40px;font-size:15px}
+.drop-zone{width:500px;max-width:90vw;height:260px;border:2px dashed var(--border);border-radius:var(--rl);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:all .2s;cursor:pointer}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--accent-dim)}
+.drop-zone .icon{font-size:48px;opacity:.6}
+.drop-zone p{color:var(--text2);font-size:14px}
+.drop-zone .browse-btn{background:var(--accent);color:#fff;padding:10px 24px;font-size:14px;font-weight:600}
+.upload-help{margin-top:32px;padding:20px 28px;background:var(--surface);border-radius:var(--rl);max-width:500px;font-size:13px;color:var(--text2);line-height:1.8}
+.upload-help strong{color:var(--text)}
+
+/* ---- Main App Layout ---- */
+#app{height:100vh}
+.app-layout{display:grid;grid-template-columns:280px 1fr;grid-template-rows:auto auto 1fr;height:100vh}
+
+/* Top Bar */
+.top-bar{grid-column:1/-1;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px}
+.top-bar h2{font-size:16px;font-weight:600;white-space:nowrap}
+.top-bar .search-box{flex:1;max-width:400px}
+.top-bar .search-box input{width:100%}
+.top-bar .stats{display:flex;gap:16px;margin-left:auto;font-size:13px}
+.stat{display:flex;align-items:center;gap:5px}
+.stat .dot{width:8px;height:8px;border-radius:50%}
+.stat .dot.total{background:var(--accent)}.stat .dot.keep{background:var(--green)}
+.stat .dot.del{background:var(--red)}.stat .dot.unrev{background:var(--text2)}
+
+/* Sidebar */
+.sidebar{grid-row:2/4;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:12px}
+.sidebar section{margin-bottom:16px}
+.sidebar section h3{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px;padding:0 4px}
+.fbtn{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;background:0;color:var(--text);font-size:13px;text-align:left;border-radius:6px}
+.fbtn:hover{background:var(--surface2)}
+.fbtn.active{background:var(--accent-dim);color:var(--accent)}
+.fbtn .cnt{margin-left:auto;background:var(--surface3);color:var(--text2);padding:1px 8px;border-radius:10px;font-size:11px}
+.fbtn.active .cnt{background:var(--accent);color:#fff}
+.plist{max-height:200px;overflow-y:auto}
+.ptag{display:inline-flex;align-items:center;gap:4px;background:var(--green-dim);color:var(--green);border:1px solid #2a5a30;border-radius:20px;padding:3px 10px;font-size:12px;margin:2px}
+.ptag .rm{cursor:pointer;opacity:.7;font-size:14px}.ptag .rm:hover{opacity:1}
+.abtn{padding:8px 12px;font-size:13px;font-weight:500;text-align:left;width:100%;margin-bottom:4px}
+.abtn.green{background:var(--green-dim);color:var(--green)}.abtn.green:hover{background:#1e4a26}
+.abtn.red{background:var(--red-dim);color:var(--red)}.abtn.red:hover{background:#4a1a1a}
+.abtn.blue{background:var(--accent-dim);color:var(--accent)}.abtn.blue:hover{background:#2a5a9a}
+.abtn.purple{background:var(--purple-dim);color:var(--purple)}.abtn.purple:hover{background:#3a2a4a}
+.abtn.grey{background:var(--surface3);color:var(--text)}
+
+/* Action Bar */
+.action-bar{grid-column:2;padding:10px 20px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.action-bar .sort-group{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2)}
+.action-bar select{padding:5px 8px;font-size:12px}
+.vt{display:flex;gap:2px;margin-left:auto}
+.vt button{background:var(--surface3);color:var(--text2);padding:5px 10px;font-size:12px}
+.vt button.active{background:var(--accent-dim);color:var(--accent)}
+.ba{display:flex;gap:6px}
+.ba button{font-size:12px;padding:5px 10px}
+.ba .kbtn{background:var(--green-dim);color:var(--green)}
+.ba .dbtn{background:var(--red-dim);color:var(--red)}
+
+/* Contact List */
+.contact-list{grid-column:2;overflow-y:auto;padding:12px 20px}
+.group-header{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 4px;margin-top:12px;font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.group-header .pgbtn{background:var(--green-dim);color:var(--green);font-size:11px;padding:2px 10px}
+.group-header .pgbtn.on{background:var(--green);color:#fff}
+
+/* Contact card — FIXED WIDTH action area */
+.cc{display:grid;grid-template-columns:36px 1fr 180px;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--r);transition:background .1s;cursor:default;border-left:3px solid transparent}
+.cc:hover{background:var(--surface)}
+.cc.sel{background:var(--accent-dim)}
+.cc.st-keep{border-left-color:var(--green)}
+.cc.st-delete{border-left-color:var(--red);opacity:.6}
+.cc.st-delete:hover{opacity:1}
+.av{width:36px;height:36px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--text2)}
+.ci{min-width:0}
+.cn{font-size:14px;font-weight:500}
+.cm{font-size:12px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap}
+.cm span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px}
+.cb{display:flex;gap:4px;margin-top:3px}
+.badge{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:500;white-space:nowrap}
+.badge.no-email{background:var(--orange-dim);color:var(--orange)}
+.badge.no-phone{background:var(--red-dim);color:var(--red)}
+.badge.minimal{background:var(--surface3);color:var(--text2)}
+.badge.dup{background:var(--purple-dim);color:var(--purple);cursor:pointer}
+/* Fixed-width action column — buttons never shift */
+.ca{display:flex;gap:4px;justify-content:flex-end;opacity:0;transition:opacity .15s}
+.cc:hover .ca,.cc.sel .ca{opacity:1}
+.ca button{padding:5px 10px;font-size:12px;min-width:54px;text-align:center}
+.bk{background:var(--green-dim);color:var(--green)}.bk:hover{background:#1e4a26}
+.bd{background:var(--red-dim);color:var(--red)}.bd:hover{background:#4a1a1a}
+.bu{background:var(--surface3);color:var(--text2)}.bu:hover{background:var(--surface2)}
+
+/* Toast */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:500;display:flex;flex-direction:column-reverse;gap:8px}
+.toast{padding:10px 16px;border-radius:var(--r);font-size:13px;font-weight:500;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.green{background:var(--green-dim);color:var(--green);border:1px solid #2a5a30}
+.toast.red{background:var(--red-dim);color:var(--red);border:1px solid #5a2a2a}
+.toast.purple{background:var(--purple-dim);color:var(--purple);border:1px solid #4a2a5a}
+.toast.blue{background:var(--accent-dim);color:var(--accent);border:1px solid #2a4a8a}
+
+/* Empty state */
+.empty-state{text-align:center;padding:60px;color:var(--text2)}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--surface);border-radius:var(--rl);padding:24px;max-width:600px;width:90vw;max-height:85vh;overflow-y:auto}
+.modal h3{margin-bottom:16px}
+.modal .macts{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.mbtn{padding:8px 20px;font-size:14px;font-weight:500}
+.mbtn.primary{background:var(--accent);color:#fff}
+.mbtn.danger{background:var(--red);color:#fff}
+.mbtn.cancel{background:var(--surface3);color:var(--text)}
+
+/* ---- Quick Triage Mode ---- */
+.triage-overlay{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+.triage-top{padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px}
+.triage-top h2{font-size:18px;font-weight:700;white-space:nowrap}
+.triage-top .prog-wrap{flex:1;max-width:500px}
+.triage-top .prog-bar{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.triage-top .prog-fill{height:100%;border-radius:3px;transition:width .3s;background:linear-gradient(90deg,var(--green),var(--accent))}
+.triage-top .prog-text{font-size:12px;color:var(--text2);margin-top:3px}
+.triage-top .close-btn{margin-left:auto;background:var(--surface3);color:var(--text);padding:6px 16px}
+.triage-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;gap:24px;overflow-y:auto}
+.triage-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--rl);padding:32px;width:100%;max-width:500px;text-align:center;transition:all .3s}
+.triage-card.flash-keep{border-color:var(--green);background:var(--green-dim);transform:translateX(30px)}
+.triage-card.flash-del{border-color:var(--red);background:var(--red-dim);transform:translateX(-30px)}
+.triage-card .tc-name{font-size:22px;font-weight:700;margin-bottom:4px}
+.triage-card .tc-company{font-size:14px;color:var(--text2);margin-bottom:16px}
+.triage-card .tc-fields{text-align:left;font-size:13px;margin-bottom:16px}
+.triage-card .tc-field{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)}
+.triage-card .tc-field:last-child{border-bottom:none}
+.triage-card .tc-lbl{color:var(--text2);min-width:20px}
+.triage-card .tc-val{color:var(--text);word-break:break-all}
+.triage-card .tc-badges{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
+.triage-card .tc-score{font-size:12px;color:var(--text3);margin-top:8px}
+.triage-actions{display:flex;gap:16px;align-items:center}
+.triage-actions button{padding:14px 32px;font-size:15px;font-weight:600;min-width:120px}
+.triage-actions .ta-del{background:var(--red-dim);color:var(--red)}
+.triage-actions .ta-del:hover{background:#4a1a1a}
+.triage-actions .ta-skip{background:var(--surface3);color:var(--text)}
+.triage-actions .ta-keep{background:var(--green-dim);color:var(--green)}
+.triage-actions .ta-keep:hover{background:#1e4a26}
+.triage-actions .ta-protect{background:var(--green);color:#fff;font-size:13px;padding:10px 18px}
+.triage-hint{font-size:12px;color:var(--text3);text-align:center}
+
+/* ---- Duplicate Game ---- */
+.dg-overlay{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+.dg-top{padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px}
+.dg-top h2{font-size:18px;font-weight:700;color:var(--purple);white-space:nowrap}
+.dg-top .close-btn{margin-left:auto;background:var(--surface3);color:var(--text);padding:6px 16px}
+.dg-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:32px 24px;gap:24px}
+.dg-reason{font-size:14px;color:var(--text2);text-align:center}
+.dg-reason strong{color:var(--text)}
+.dg-reason .conf{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin-left:6px}
+.dg-reason .conf.high{background:var(--red-dim);color:var(--red)}
+.dg-reason .conf.med{background:var(--orange-dim);color:var(--orange)}
+.dg-reason .conf.low{background:var(--surface3);color:var(--text2)}
+.dg-cards{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;width:100%;max-width:900px}
+.dc{background:var(--surface);border:2px solid var(--border);border-radius:var(--rl);padding:20px;min-width:260px;max-width:400px;flex:1;transition:all .2s;position:relative}
+.dc:hover{border-color:#555}
+.dc.card-keep{border-color:var(--green);background:var(--green-dim)}
+.dc.card-del{border-color:var(--red);background:var(--red-dim);opacity:.6}
+.dc .dc-name{font-size:16px;font-weight:600;margin-bottom:10px}
+.dc .dc-f{font-size:13px;color:var(--text2);padding:3px 0;display:flex;gap:6px;align-items:baseline}
+.dc .dc-f .lbl{color:var(--text2);min-width:18px}.dc .dc-f .val{color:var(--text);word-break:break-all}
+.dc .dc-acts{display:flex;gap:6px;margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+.dc .dc-acts button{flex:1;padding:8px;font-size:13px;font-weight:600}
+.dc .dc-st{position:absolute;top:12px;right:12px;font-size:11px;font-weight:600;padding:2px 10px;border-radius:10px}
+.dc .dc-st.sk{background:var(--green);color:#fff}.dc .dc-st.sd{background:var(--red);color:#fff}
+.dg-preview{width:100%;max-width:900px;background:var(--surface);border:2px solid var(--purple);border-radius:var(--rl);padding:20px}
+.dg-preview h4{color:var(--purple);font-size:14px;margin-bottom:12px}
+.dg-preview .pr{display:flex;gap:8px;font-size:13px;padding:3px 0;align-items:baseline}
+.dg-preview .pl{color:var(--text2);min-width:80px;text-align:right;flex-shrink:0}
+.dg-preview .pv{color:var(--text)}
+.dg-preview .pc{display:flex;gap:6px;flex-wrap:wrap}
+.dg-preview .po{background:var(--surface3);border:1px solid var(--border);border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px;transition:all .1s}
+.dg-preview .po:hover{border-color:var(--purple)}
+.dg-preview .po.sel{background:var(--purple-dim);border-color:var(--purple);color:var(--purple)}
+.dg-acts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:900px}
+.dg-acts button{padding:12px 28px;font-size:14px;font-weight:600}
+.dg-acts .am{background:var(--purple);color:#fff}.dg-acts .am:hover{background:#a44ae0}.dg-acts .am:disabled{opacity:.4;cursor:default}
+.dg-acts .as{background:var(--surface3);color:var(--text)}.dg-acts .as:hover{background:#3a3a3a}
+.dg-acts .ada{background:var(--red-dim);color:var(--red)}.dg-acts .ada:hover{background:#4a1a1a}
+.dg-acts .aka{background:var(--green-dim);color:var(--green)}.dg-acts .aka:hover{background:#1e4a26}
+.dg-done{text-align:center;padding:60px 20px}
+.dg-done .di{font-size:64px;margin-bottom:16px}
+.dg-done h3{font-size:24px;margin-bottom:8px}
+.dg-done p{color:var(--text2);font-size:15px;margin-bottom:24px}
+.dg-done .ds{display:flex;gap:24px;justify-content:center;margin-bottom:32px}
+.dg-done .ds div{text-align:center}.dg-done .ds .n{font-size:32px;font-weight:700}.dg-done .ds .l{font-size:12px;color:var(--text2)}
+
+/* Wizard */
+.wiz-item{background:var(--surface2);padding:14px;border-radius:var(--r);margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.wiz-item .wi-info{flex:1;font-size:13px}
+.wiz-item .wi-info .wi-title{font-weight:600;color:var(--text)}
+.wiz-item .wi-info .wi-desc{color:var(--text2);font-size:12px}
+.wiz-item .wi-count{font-size:20px;font-weight:700;min-width:50px;text-align:center}
+.wiz-item button{min-width:80px}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:0}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#444}
+@media(max-width:768px){.app-layout{grid-template-columns:1fr}.sidebar{grid-row:auto;border-right:none;border-bottom:1px solid var(--border);max-height:200px}}
+</style>
+</head>
+<body>
+
+<!-- Upload -->
+<div id="upload-screen">
+  <h1>Contact Cleaner</h1>
+  <p class="sub">Declutter your address book. Keep the people who matter.</p>
+  <div class="drop-zone" id="drop-zone">
+    <div class="icon">📇</div>
+    <p>Drop your .vcf file here</p>
+    <button class="browse-btn" onclick="document.getElementById('file-input').click()">Browse Files</button>
+    <input type="file" id="file-input" accept=".vcf" hidden>
+  </div>
+  <div class="upload-help">
+    <strong>How to export your contacts:</strong><br>
+    1. Open <strong>Contacts.app</strong> on your Mac<br>
+    2. Press <strong>⌘A</strong> to select all contacts<br>
+    3. Go to <strong>File → Export → Export vCard…</strong><br>
+    4. Drop or upload the .vcf file here
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app" class="hidden">
+<div class="app-layout">
+  <div class="top-bar">
+    <h2>Contact Cleaner</h2>
+    <div class="search-box"><input type="text" id="search-input" placeholder="Search contacts… (/)"></div>
+    <div class="stats">
+      <span class="stat"><span class="dot total"></span><span id="st-tot">0</span> total</span>
+      <span class="stat"><span class="dot keep"></span><span id="st-keep">0</span> keep</span>
+      <span class="stat"><span class="dot del"></span><span id="st-del">0</span> delete</span>
+      <span class="stat"><span class="dot unrev"></span><span id="st-unr">0</span> unreviewed</span>
+    </div>
+  </div>
+  <div class="sidebar">
+    <section>
+      <h3>Modes</h3>
+      <button class="abtn purple" onclick="openTriage()">⚡ Quick Triage <kbd>T</kbd></button>
+      <button class="abtn purple" onclick="openSmartCleanup()">🧹 Smart Cleanup…</button>
+      <button class="abtn purple" onclick="openDupGame()">🔁 Merge Duplicates <kbd>G</kbd></button>
+    </section>
+    <section>
+      <h3>Filters</h3>
+      <button class="fbtn" data-filter="all">📋 All <span class="cnt" id="fc-all">0</span></button>
+      <button class="fbtn" data-filter="unreviewed">⭕ Unreviewed <span class="cnt" id="fc-unr">0</span></button>
+      <button class="fbtn" data-filter="keep">✅ Keep <span class="cnt" id="fc-keep">0</span></button>
+      <button class="fbtn" data-filter="delete">🗑️ Delete <span class="cnt" id="fc-del">0</span></button>
+    </section>
+    <section>
+      <h3>Data Quality</h3>
+      <button class="fbtn" data-filter="no-email">📧 No Email <span class="cnt" id="fc-ne">0</span></button>
+      <button class="fbtn" data-filter="no-phone">📱 No Phone <span class="cnt" id="fc-np">0</span></button>
+      <button class="fbtn" data-filter="minimal">⚠️ Name Only <span class="cnt" id="fc-min">0</span></button>
+      <button class="fbtn" data-filter="no-name">👤 No Name <span class="cnt" id="fc-nn">0</span></button>
+      <button class="fbtn" data-filter="duplicates">🔁 Duplicates <span class="cnt" id="fc-dup">0</span></button>
+    </section>
+    <section>
+      <h3>Protected Last Names</h3>
+      <div class="plist" id="pl-names"></div>
+    </section>
+    <section>
+      <h3>Protected Companies</h3>
+      <div class="plist" id="pl-companies"></div>
+    </section>
+    <section>
+      <h3>Protected Domains</h3>
+      <div class="plist" id="pl-domains"></div>
+    </section>
+    <section>
+      <h3>Export</h3>
+      <button class="abtn green" onclick="exportKeep()">⬇ Export "Keep" as .vcf</button>
+      <button class="abtn red" onclick="exportDeleteList()">📋 Export delete list</button>
+      <button class="abtn blue" onclick="showSummary()">📊 Summary</button>
+    </section>
+    <section>
+      <button class="abtn grey" onclick="resetAll()">↺ Start Over</button>
+    </section>
+  </div>
+  <div class="action-bar">
+    <div class="sort-group">Sort:<select id="sort-select">
+      <option value="last-name">Last Name</option><option value="first-name">First Name</option>
+      <option value="company">Company</option><option value="email-domain">Email Domain</option>
+      <option value="info-score">Info Completeness</option>
+    </select></div>
+    <div class="ba">
+      <button class="kbtn" onclick="batchKeepVisible()">✓ Keep Visible</button>
+      <button class="dbtn" onclick="batchDeleteVisible()">✗ Delete Visible</button>
+    </div>
+    <div class="vt">
+      <button class="active" data-view="grouped" onclick="setView('grouped')">Grouped</button>
+      <button data-view="flat" onclick="setView('flat')">Flat</button>
+    </div>
+  </div>
+  <div class="contact-list" id="contact-list"></div>
+</div>
+</div>
+
+<!-- Quick Triage -->
+<div class="triage-overlay hidden" id="triage-screen">
+  <div class="triage-top">
+    <h2>⚡ Quick Triage</h2>
+    <div class="prog-wrap">
+      <div class="prog-bar"><div class="prog-fill" id="tr-prog-fill"></div></div>
+      <div class="prog-text" id="tr-prog-text">0 of 0</div>
+    </div>
+    <button class="close-btn" onclick="closeTriage()">Done ✖</button>
+  </div>
+  <div class="triage-body" id="tr-body"></div>
+</div>
+
+<!-- Duplicate Game -->
+<div class="dg-overlay hidden" id="dg-screen">
+  <div class="dg-top">
+    <h2>🔁 Duplicate Review</h2>
+    <div class="prog-wrap">
+      <div class="prog-bar"><div class="prog-fill" id="dg-prog-fill"></div></div>
+      <div class="prog-text" id="dg-prog-text">0 of 0</div>
+    </div>
+    <button class="close-btn" onclick="closeDupGame()">Done ✖</button>
+  </div>
+  <div class="dg-body" id="dg-body"></div>
+</div>
+
+<!-- Smart Cleanup Modal -->
+<div class="modal-overlay hidden" id="cleanup-modal">
+  <div class="modal" style="max-width:550px">
+    <h3>🧹 Smart Cleanup</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Review and apply bulk actions. Each step shows a preview — nothing happens until you click Apply.</p>
+    <div id="cleanup-content"></div>
+    <div class="macts"><button class="mbtn cancel" onclick="closeModal('cleanup-modal')">Close</button></div>
+  </div>
+</div>
+
+<!-- Summary Modal -->
+<div class="modal-overlay hidden" id="summary-modal">
+  <div class="modal"><h3>📊 Cleanup Summary</h3><div id="summary-content"></div>
+  <div class="macts"><button class="mbtn cancel" onclick="closeModal('summary-modal')">Close</button></div>
+</div></div>
+
+<!-- Toasts -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ============ STATE ============
+let contacts = [], rawVCards = [];
+let protectedLastNames = new Set(), protectedCompanies = new Set(), protectedDomains = new Set();
+let currentFilter = 'all', currentSort = 'last-name', currentView = 'grouped';
+let duplicateIds = new Set(), duplicateGroups = [];
+let undoStack = []; // [{ids, prevStatuses}]
+let selectedIdx = -1; // keyboard nav in list
+// Triage state
+let trQueue = [], trIdx = 0, trStats = {kept:0, deleted:0, skipped:0};
+// Dup game state
+let dgIdx = 0, dgResolved = new Set(), dgCardSt = {}, dgChoices = {}, dgStats = {merged:0,skipped:0,deleted:0};
+
+// ============ UNDO ============
+function pushUndo(ids) {
+  const snap = {};
+  for (const id of ids) snap[id] = contacts[id].status;
+  undoStack.push(snap);
+  if (undoStack.length > 200) undoStack.shift();
+}
+function popUndo() {
+  if (undoStack.length === 0) return;
+  const snap = undoStack.pop();
+  for (const [id, status] of Object.entries(snap)) contacts[id].status = status;
+  detectDuplicates();
+  render();
+  toast('Undid last action', 'blue');
+}
+
+// ============ TOAST ============
+function toast(msg, type='blue') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 2000);
+}
+
+// ============ PHONE NORMALIZATION ============
+function normalizePhone(raw) {
+  let d = raw.replace(/[^\d]/g, '');
+  if (d.length === 11 && d[0] === '1') d = d.slice(1);
+  if (d.length > 10 && d[0] === '0') d = d.slice(1);
+  return d;
+}
+function bestPhoneFmt(phones) {
+  return phones.sort((a, b) => {
+    const fa = a.replace(/\d/g,'').length, fb = b.replace(/\d/g,'').length;
+    return fb !== fa ? fb - fa : b.length - a.length;
+  })[0];
+}
+function dedupPhones(phones) {
+  const m = new Map();
+  for (const p of phones) {
+    const n = normalizePhone(p);
+    if (n.length < 7) { m.set(p, [p]); continue; }
+    if (!m.has(n)) m.set(n, []);
+    m.get(n).push(p);
+  }
+  return [...m.values()].map(g => bestPhoneFmt(g));
+}
+
+// ============ VCARD PARSER ============
+function parseVCardFile(text) {
+  text = text.replace(/\r\n[ \t]/g, '').replace(/\r/g, '');
+  const blocks = text.split(/(?=BEGIN:VCARD)/i).filter(b => b.trim());
+  const parsed = [], raws = [];
+  let id = 0;
+  for (const block of blocks) {
+    if (!block.match(/BEGIN:VCARD/i)) continue;
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    const c = {id:id++,firstName:'',lastName:'',fullName:'',company:'',title:'',emails:[],phones:[],addresses:[],notes:'',birthday:'',status:'unreviewed'};
+    for (const line of lines) {
+      const ci = line.indexOf(':');
+      if (ci < 0) continue;
+      const key = line.substring(0, ci).toUpperCase();
+      const val = line.substring(ci + 1).replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+      if (key === 'FN' || key.startsWith('FN;')) c.fullName = val;
+      else if (key === 'N' || key.startsWith('N;')) { const p = val.split(';'); c.lastName = (p[0]||'').trim(); c.firstName = (p[1]||'').trim(); }
+      else if (key.startsWith('EMAIL')) { if (val.trim()) c.emails.push(val.trim()); }
+      else if (key.startsWith('TEL')) { if (val.trim()) c.phones.push(val.trim()); }
+      else if (key.startsWith('ORG')) c.company = val.split(';')[0].trim();
+      else if (key.startsWith('TITLE')) c.title = val.trim();
+      else if (key.startsWith('NOTE')) c.notes = val.trim();
+      else if (key.startsWith('BDAY')) c.birthday = val.trim();
+      else if (key.startsWith('ADR')) { const a = val.split(';').map(s=>s.trim()).filter(Boolean).join(', '); if (a) c.addresses.push(a); }
+    }
+    if (!c.fullName) c.fullName = [c.firstName, c.lastName].filter(Boolean).join(' ');
+    if (!c.firstName && !c.lastName && c.fullName) { const p = c.fullName.split(' '); c.firstName = p[0]||''; c.lastName = p.slice(1).join(' ')||''; }
+    c.emailDomain = c.emails.length > 0 ? c.emails[0].split('@')[1]||'' : '';
+    c.infoScore = (c.emails.length>0?1:0)+(c.phones.length>0?1:0)+(c.company?1:0)+(c.addresses.length>0?1:0)+(c.notes?1:0)+(c.birthday?1:0);
+    c.isMinimal = c.emails.length===0 && c.phones.length===0 && !c.company && c.addresses.length===0;
+    c.hasNoName = !c.fullName.trim();
+    parsed.push(c); raws.push(block);
+  }
+  return {parsed, raws};
+}
+
+// ============ DUPLICATE DETECTION (SMART) ============
+function isProtected(c) {
+  if (c.lastName && protectedLastNames.has(c.lastName.toLowerCase())) return true;
+  if (c.company && protectedCompanies.has(c.company.toLowerCase())) return true;
+  if (c.emailDomain && protectedDomains.has(c.emailDomain.toLowerCase())) return true;
+  return false;
+}
+
+function detectDuplicates() {
+  duplicateIds.clear();
+  duplicateGroups = [];
+  const active = contacts.filter(c => c.status !== 'delete');
+
+  // Build pairwise match scores: only group contacts that DIRECTLY match each other.
+  // No transitive chaining through unrelated contacts.
+  const pairScores = new Map(); // "id1-id2" -> {score, reasons}
+  function pairKey(a,b) { return Math.min(a,b)+'-'+Math.max(a,b); }
+
+  // Index by normalized name, email, phone
+  const nameIdx = new Map(), emailIdx = new Map(), phoneIdx = new Map();
+  for (const c of active) {
+    const nn = c.fullName.toLowerCase().replace(/[^a-z]/g, '');
+    if (nn.length > 2) { if (!nameIdx.has(nn)) nameIdx.set(nn,[]); nameIdx.get(nn).push(c.id); }
+    for (const e of c.emails) { const ne = e.toLowerCase().trim(); if (!emailIdx.has(ne)) emailIdx.set(ne,[]); emailIdx.get(ne).push(c.id); }
+    for (const p of c.phones) { const np = normalizePhone(p); if (np.length>=7) { if (!phoneIdx.has(np)) phoneIdx.set(np,[]); phoneIdx.get(np).push(c.id); } }
+  }
+
+  function addPairScore(ids, score, reason) {
+    for (let i=0;i<ids.length;i++) for (let j=i+1;j<ids.length;j++) {
+      const k = pairKey(ids[i],ids[j]);
+      if (!pairScores.has(k)) pairScores.set(k, {score:0, reasons:new Set(), ids:[ids[i],ids[j]]});
+      const p = pairScores.get(k);
+      p.score += score; p.reasons.add(reason);
+    }
+  }
+  for (const [,ids] of nameIdx) { if (ids.length > 1) addPairScore(ids, 2, 'same name'); }
+  for (const [,ids] of emailIdx) { if (ids.length > 1) addPairScore(ids, 3, 'same email'); }
+  for (const [,ids] of phoneIdx) { if (ids.length > 1) addPairScore(ids, 3, 'same phone'); }
+
+  // Only keep pairs with score >= 2 (at minimum a name match)
+  // Group into clusters using union-find, but ONLY through direct high-confidence links
+  const validPairs = [...pairScores.values()].filter(p => p.score >= 2);
+  const allIds = new Set();
+  validPairs.forEach(p => { allIds.add(p.ids[0]); allIds.add(p.ids[1]); });
+
+  // Exclude protected contacts from being flagged as duplicates
+  // (they can still exist — just don't show up in the dup workflow)
+  const protectedIds = new Set();
+  for (const id of allIds) { if (isProtected(contacts[id])) protectedIds.add(id); }
+
+  // Union-find on non-protected
+  const parent = {};
+  function find(x) { return parent[x]===x ? x : (parent[x]=find(parent[x])); }
+  function union(a,b) { parent[find(a)] = find(b); }
+
+  for (const id of allIds) { if (!protectedIds.has(id)) parent[id] = id; }
+  for (const p of validPairs) {
+    const [a,b] = p.ids;
+    if (protectedIds.has(a) || protectedIds.has(b)) continue;
+    // Only union if BOTH share a direct link (score >= 2)
+    union(a,b);
+  }
+
+  const gm = new Map();
+  for (const id of allIds) {
+    if (protectedIds.has(id)) continue;
+    const r = find(id);
+    if (!gm.has(r)) gm.set(r,[]);
+    gm.get(r).push(id);
+  }
+  duplicateGroups = [...gm.values()].filter(g => g.length > 1).sort((a,b) => b.length - a.length);
+
+  // Compute confidence per group
+  for (const g of duplicateGroups) {
+    let maxScore = 0;
+    const allReasons = new Set();
+    for (let i=0;i<g.length;i++) for (let j=i+1;j<g.length;j++) {
+      const k = pairKey(g[i],g[j]);
+      const p = pairScores.get(k);
+      if (p) { maxScore = Math.max(maxScore, p.score); p.reasons.forEach(r => allReasons.add(r)); }
+    }
+    g._score = maxScore;
+    g._reasons = [...allReasons];
+    g._conf = maxScore >= 5 ? 'high' : maxScore >= 3 ? 'med' : 'low';
+  }
+
+  duplicateIds.clear();
+  for (const g of duplicateGroups) g.forEach(id => duplicateIds.add(id));
+}
+
+// ============ FILTERING & SORTING ============
+function getFiltered() {
+  const s = document.getElementById('search-input').value.toLowerCase();
+  let list = contacts;
+  switch (currentFilter) {
+    case 'unreviewed': list=list.filter(c=>c.status==='unreviewed'); break;
+    case 'keep': list=list.filter(c=>c.status==='keep'); break;
+    case 'delete': list=list.filter(c=>c.status==='delete'); break;
+    case 'no-email': list=list.filter(c=>c.emails.length===0); break;
+    case 'no-phone': list=list.filter(c=>c.phones.length===0); break;
+    case 'minimal': list=list.filter(c=>c.isMinimal); break;
+    case 'no-name': list=list.filter(c=>c.hasNoName); break;
+    case 'duplicates': list=list.filter(c=>duplicateIds.has(c.id)); break;
+  }
+  if (s) list = list.filter(c =>
+    c.fullName.toLowerCase().includes(s) || c.company.toLowerCase().includes(s) ||
+    c.emails.some(e=>e.toLowerCase().includes(s)) || c.phones.some(p=>p.includes(s)) ||
+    c.notes.toLowerCase().includes(s));
+  return list;
+}
+function sortList(list) {
+  const copy = [...list];
+  switch (currentSort) {
+    case 'last-name': copy.sort((a,b)=>(a.lastName||a.fullName).localeCompare(b.lastName||b.fullName)); break;
+    case 'first-name': copy.sort((a,b)=>(a.firstName||a.fullName).localeCompare(b.firstName||b.fullName)); break;
+    case 'company': copy.sort((a,b)=>(a.company||'zzz').localeCompare(b.company||'zzz')); break;
+    case 'email-domain': copy.sort((a,b)=>(a.emailDomain||'zzz').localeCompare(b.emailDomain||'zzz')); break;
+    case 'info-score': copy.sort((a,b)=>a.infoScore-b.infoScore); break;
+  }
+  return copy;
+}
+function groupList(list) {
+  const g = new Map();
+  for (const c of list) {
+    let k;
+    switch (currentSort) {
+      case 'last-name': k=(c.lastName||c.fullName||'?')[0].toUpperCase(); if(!/[A-Z]/.test(k))k='#'; break;
+      case 'first-name': k=(c.firstName||c.fullName||'?')[0].toUpperCase(); if(!/[A-Z]/.test(k))k='#'; break;
+      case 'company': k=c.company||'(No Company)'; break;
+      case 'email-domain': k=c.emailDomain||'(No Email)'; break;
+      case 'info-score': k=c.infoScore===0?'⚠️ No info':c.infoScore<=2?'🟡 Basic':'🟢 Good'; break;
+      default: k='#';
+    }
+    if(!g.has(k))g.set(k,[]);g.get(k).push(c);
+  }
+  return g;
+}
+
+// ============ RENDER ============
+function render() {
+  const filtered = getFiltered(), sorted = sortList(filtered);
+  updateStats(); updateFilters(); renderProtected();
+  const el = document.getElementById('contact-list'); el.innerHTML = '';
+  if (sorted.length === 0) { el.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No contacts match</p></div>'; return; }
+  selectedIdx = -1;
+  if (currentView === 'grouped') {
+    const groups = groupList(sorted);
+    for (const [name, gc] of groups) {
+      const h = document.createElement('div'); h.className = 'group-header';
+      let pb = '';
+      if (currentSort === 'company' && name !== '(No Company)') {
+        const on = protectedCompanies.has(name);
+        pb = `<button class="pgbtn ${on?'on':''}" onclick="toggleProtectCo('${esc(name)}')">${on?'✓ Protected':'Protect All'}</button>`;
+      }
+      h.innerHTML = `<span>${escH(name)} (${gc.length})</span>${pb}`;
+      el.appendChild(h);
+      gc.forEach(c => el.appendChild(mkCard(c)));
+    }
+  } else sorted.forEach(c => el.appendChild(mkCard(c)));
+}
+
+function mkCard(c) {
+  const card = document.createElement('div');
+  card.className = `cc st-${c.status}`;
+  card.dataset.id = c.id;
+  const ini = ((c.firstName||'?')[0]+(c.lastName||'')[0]).toUpperCase();
+  const avBg = c.status==='keep'?'var(--green-dim)':c.status==='delete'?'var(--red-dim)':'var(--surface3)';
+  let badges = '';
+  if (c.emails.length===0 && !c.hasNoName) badges += '<span class="badge no-email">no email</span>';
+  if (c.phones.length===0 && !c.hasNoName) badges += '<span class="badge no-phone">no phone</span>';
+  if (c.isMinimal) badges += '<span class="badge minimal">name only</span>';
+  if (duplicateIds.has(c.id)) {
+    const gi = duplicateGroups.findIndex(g => g.includes(c.id));
+    badges += `<span class="badge dup" onclick="event.stopPropagation();openDupGameAt(${gi})">duplicate</span>`;
+  }
+  let meta = '';
+  if (c.emails.length>0) meta += `<span>📧 ${escH(c.emails[0])}</span>`;
+  if (c.phones.length>0) meta += `<span>📱 ${escH(c.phones[0])}</span>`;
+  if (c.company) meta += `<span>🏢 ${escH(c.company)}</span>`;
+
+  // STABLE action buttons — always same width, same position
+  let acts;
+  if (c.status === 'unreviewed') {
+    acts = `<button class="bk" onclick="doMark(${c.id},'keep')">Keep</button>
+            <button class="bd" onclick="doMark(${c.id},'delete')">Delete</button>`;
+  } else if (c.status === 'keep') {
+    acts = `<button class="bu" onclick="doMark(${c.id},'unreviewed')">Undo</button>
+            <button class="bd" onclick="doMark(${c.id},'delete')">Delete</button>`;
+  } else {
+    acts = `<button class="bk" onclick="doMark(${c.id},'keep')">Keep</button>
+            <button class="bu" onclick="doMark(${c.id},'unreviewed')">Undo</button>`;
+  }
+  // Protect last name (only if not already protected)
+  if (c.lastName && !protectedLastNames.has(c.lastName.toLowerCase())) {
+    acts += `<button class="bk" style="font-size:11px" onclick="doProtectName('${esc(c.lastName)}')" title="Keep all ${esc(c.lastName)}">🛡</button>`;
+  }
+  card.innerHTML = `<div class="av" style="background:${avBg}">${escH(ini)}</div>
+    <div class="ci"><div class="cn">${escH(c.fullName||'(No Name)')}</div><div class="cm">${meta}</div><div class="cb">${badges}</div></div>
+    <div class="ca">${acts}</div>`;
+  return card;
+}
+
+// ============ ACTIONS WITH UNDO ============
+function doMark(id, status) {
+  pushUndo([id]);
+  contacts[id].status = status;
+  if (status === 'delete' || status === 'keep') detectDuplicates();
+  render();
+  const name = contacts[id].fullName || '(No Name)';
+  if (status === 'keep') toast(`Kept ${name}`, 'green');
+  else if (status === 'delete') toast(`Deleted ${name}`, 'red');
+}
+function doProtectName(name) {
+  const key = name.toLowerCase();
+  const affected = contacts.filter(c => c.lastName.toLowerCase() === key);
+  pushUndo(affected.map(c => c.id));
+  protectedLastNames.add(key);
+  affected.forEach(c => c.status = 'keep');
+  detectDuplicates();
+  render();
+  toast(`Protected "${name}" — ${affected.length} contacts kept`, 'green');
+}
+function protectDomain(domain) {
+  const key = domain.toLowerCase();
+  const affected = contacts.filter(c => c.emailDomain.toLowerCase() === key);
+  pushUndo(affected.map(c => c.id));
+  protectedDomains.add(key);
+  affected.forEach(c => c.status = 'keep');
+  detectDuplicates(); render();
+  toast(`Protected @${domain} — ${affected.length} contacts`, 'green');
+}
+function toggleProtectCo(name) {
+  const key = name.toLowerCase();
+  if (protectedCompanies.has(key)) { protectedCompanies.delete(key); render(); return; }
+  const affected = contacts.filter(c => c.company.toLowerCase() === key);
+  pushUndo(affected.map(c => c.id));
+  protectedCompanies.add(key);
+  affected.forEach(c => c.status = 'keep');
+  detectDuplicates(); render();
+  toast(`Protected "${name}" — ${affected.length} contacts`, 'green');
+}
+function batchKeepVisible() {
+  const f = getFiltered();
+  pushUndo(f.map(c=>c.id));
+  f.forEach(c => c.status = 'keep');
+  detectDuplicates(); render();
+  toast(`Kept ${f.length} contacts`, 'green');
+}
+function batchDeleteVisible() {
+  const f = getFiltered().filter(c => !isProtected(c));
+  pushUndo(f.map(c=>c.id));
+  f.forEach(c => c.status = 'delete');
+  detectDuplicates(); render();
+  toast(`Deleted ${f.length} contacts`, 'red');
+}
+
+// ============ STATS ============
+function updateStats() {
+  const t=contacts.length, k=contacts.filter(c=>c.status==='keep').length, d=contacts.filter(c=>c.status==='delete').length;
+  document.getElementById('st-tot').textContent=t;
+  document.getElementById('st-keep').textContent=k;
+  document.getElementById('st-del').textContent=d;
+  document.getElementById('st-unr').textContent=t-k-d;
+  document.getElementById('fc-all').textContent=t;
+  document.getElementById('fc-unr').textContent=t-k-d;
+  document.getElementById('fc-keep').textContent=k;
+  document.getElementById('fc-del').textContent=d;
+  document.getElementById('fc-ne').textContent=contacts.filter(c=>c.emails.length===0).length;
+  document.getElementById('fc-np').textContent=contacts.filter(c=>c.phones.length===0).length;
+  document.getElementById('fc-min').textContent=contacts.filter(c=>c.isMinimal).length;
+  document.getElementById('fc-nn').textContent=contacts.filter(c=>c.hasNoName).length;
+  document.getElementById('fc-dup').textContent=duplicateIds.size;
+}
+function updateFilters() {
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.toggle('active', b.dataset.filter === currentFilter));
+}
+function renderProtected() {
+  const render1 = (container, items, removeFn, prefix='') => {
+    const el = document.getElementById(container); el.innerHTML = '';
+    for (const name of items) {
+      el.innerHTML += `<span class="ptag">${prefix}${escH(name)} <span class="rm" onclick="${removeFn}('${esc(name)}')">&times;</span></span>`;
+    }
+    if (items.size === 0) el.innerHTML = '<span style="font-size:12px;color:var(--text2);padding:4px">None</span>';
+  };
+  render1('pl-names', protectedLastNames, 'rmProtName');
+  render1('pl-companies', protectedCompanies, 'rmProtCo');
+  render1('pl-domains', protectedDomains, 'rmProtDom', '@');
+}
+function rmProtName(n) { protectedLastNames.delete(n.toLowerCase()); detectDuplicates(); render(); }
+function rmProtCo(n) { protectedCompanies.delete(n.toLowerCase()); render(); }
+function rmProtDom(n) { protectedDomains.delete(n.toLowerCase()); render(); }
+
+// ============ QUICK TRIAGE ============
+function openTriage() {
+  trQueue = contacts.filter(c => c.status === 'unreviewed').map(c => c.id);
+  if (trQueue.length === 0) { toast('No unreviewed contacts!', 'blue'); return; }
+  trIdx = 0; trStats = {kept:0,deleted:0,skipped:0};
+  document.getElementById('triage-screen').classList.remove('hidden');
+  renderTriage();
+}
+function closeTriage() {
+  document.getElementById('triage-screen').classList.add('hidden');
+  render();
+}
+function renderTriage() {
+  const total = trQueue.length;
+  // Skip already-decided contacts
+  while (trIdx < total && contacts[trQueue[trIdx]].status !== 'unreviewed') trIdx++;
+  const pct = total > 0 ? Math.round(trIdx / total * 100) : 100;
+  document.getElementById('tr-prog-fill').style.width = pct + '%';
+  document.getElementById('tr-prog-text').textContent = `${trIdx} of ${total} reviewed (${pct}%) — ${trStats.kept} kept, ${trStats.deleted} deleted, ${trStats.skipped} skipped`;
+
+  const body = document.getElementById('tr-body');
+  if (trIdx >= total) {
+    body.innerHTML = `<div class="dg-done"><div class="di">🎉</div><h3>Triage Complete!</h3>
+      <p>Reviewed ${total} contacts</p>
+      <div class="ds">
+        <div><div class="n" style="color:var(--green)">${trStats.kept}</div><div class="l">Kept</div></div>
+        <div><div class="n" style="color:var(--red)">${trStats.deleted}</div><div class="l">Deleted</div></div>
+        <div><div class="n" style="color:var(--text2)">${trStats.skipped}</div><div class="l">Skipped</div></div>
+      </div>
+      <button class="mbtn primary" onclick="closeTriage()">Back to Contacts</button></div>`;
+    return;
+  }
+  const c = contacts[trQueue[trIdx]];
+  let fields = '';
+  for (const e of c.emails) fields += `<div class="tc-field"><span class="tc-lbl">📧</span><span class="tc-val">${escH(e)}</span></div>`;
+  for (const p of c.phones) fields += `<div class="tc-field"><span class="tc-lbl">📱</span><span class="tc-val">${escH(p)}</span></div>`;
+  if (c.company) fields += `<div class="tc-field"><span class="tc-lbl">🏢</span><span class="tc-val">${escH(c.company)}</span></div>`;
+  if (c.title) fields += `<div class="tc-field"><span class="tc-lbl">💼</span><span class="tc-val">${escH(c.title)}</span></div>`;
+  for (const a of c.addresses) fields += `<div class="tc-field"><span class="tc-lbl">📍</span><span class="tc-val">${escH(a)}</span></div>`;
+  if (c.birthday) fields += `<div class="tc-field"><span class="tc-lbl">🎂</span><span class="tc-val">${escH(c.birthday)}</span></div>`;
+  if (c.notes) fields += `<div class="tc-field"><span class="tc-lbl">📝</span><span class="tc-val">${escH(c.notes.substring(0,120))}</span></div>`;
+
+  let badges = '';
+  if (c.isMinimal) badges += '<span class="badge minimal">name only</span>';
+  if (c.emails.length===0 && !c.hasNoName) badges += '<span class="badge no-email">no email</span>';
+  if (c.phones.length===0 && !c.hasNoName) badges += '<span class="badge no-phone">no phone</span>';
+
+  const protectBtn = c.lastName && !protectedLastNames.has(c.lastName.toLowerCase())
+    ? `<button class="ta-protect" onclick="trProtect()">🛡 Keep all "${escH(c.lastName)}"</button>` : '';
+
+  body.innerHTML = `
+    <div class="triage-card" id="tr-card">
+      <div class="tc-name">${escH(c.fullName || '(No Name)')}</div>
+      <div class="tc-company">${escH(c.company || '')}</div>
+      <div class="tc-badges">${badges}</div>
+      <div class="tc-fields">${fields || '<div style="color:var(--text3);text-align:center;font-style:italic">No additional information</div>'}</div>
+      <div class="tc-score">Info score: ${c.infoScore}/6</div>
+    </div>
+    <div class="triage-actions">
+      <button class="ta-del" onclick="trAct('delete')">✗ Delete <kbd>←</kbd></button>
+      <button class="ta-skip" onclick="trAct('skip')">Skip <kbd>↓</kbd></button>
+      <button class="ta-keep" onclick="trAct('keep')">✓ Keep <kbd>→</kbd></button>
+    </div>
+    ${protectBtn ? `<div class="triage-actions">${protectBtn}</div>` : ''}
+    <div class="triage-hint">Arrow keys: ← Delete &nbsp; ↓ Skip &nbsp; → Keep &nbsp; P Protect last name &nbsp; Esc Close</div>`;
+}
+
+function trAct(action) {
+  const card = document.getElementById('tr-card');
+  const id = trQueue[trIdx];
+  if (action === 'keep') {
+    pushUndo([id]); contacts[id].status = 'keep'; trStats.kept++;
+    if (card) { card.classList.add('flash-keep'); setTimeout(() => { trIdx++; renderTriage(); }, 200); }
+    else { trIdx++; renderTriage(); }
+  } else if (action === 'delete') {
+    pushUndo([id]); contacts[id].status = 'delete'; trStats.deleted++;
+    if (card) { card.classList.add('flash-del'); setTimeout(() => { trIdx++; renderTriage(); }, 200); }
+    else { trIdx++; renderTriage(); }
+  } else {
+    trStats.skipped++; trIdx++; renderTriage();
+  }
+}
+function trProtect() {
+  const c = contacts[trQueue[trIdx]];
+  if (!c.lastName) return;
+  doProtectName(c.lastName);
+  // Skip past all contacts with this last name in the queue
+  trIdx++;
+  renderTriage();
+}
+
+// ============ SMART CLEANUP ============
+function openSmartCleanup() {
+  const noName = contacts.filter(c => c.hasNoName && c.status === 'unreviewed');
+  const nameOnly = contacts.filter(c => c.isMinimal && !c.hasNoName && c.status === 'unreviewed');
+  const infoRich = contacts.filter(c => c.infoScore >= 3 && c.status === 'unreviewed');
+  const noContact = contacts.filter(c => c.emails.length===0 && c.phones.length===0 && c.status === 'unreviewed' && !c.hasNoName && !c.isMinimal);
+
+  let html = '';
+  html += `<div class="wiz-item">
+    <div class="wi-count" style="color:var(--red)">${noName.length}</div>
+    <div class="wi-info"><div class="wi-title">No-name contacts</div><div class="wi-desc">Contacts with no name at all — usually junk</div></div>
+    <button class="mbtn danger" onclick="wizApply('noname')" ${noName.length===0?'disabled':''}>Delete All</button>
+  </div>`;
+  html += `<div class="wiz-item">
+    <div class="wi-count" style="color:var(--orange)">${nameOnly.length}</div>
+    <div class="wi-info"><div class="wi-title">Name-only contacts</div><div class="wi-desc">Only a name — no email, phone, company, or address</div></div>
+    <button class="mbtn danger" onclick="wizApply('nameonly')" ${nameOnly.length===0?'disabled':''}>Delete All</button>
+  </div>`;
+  html += `<div class="wiz-item">
+    <div class="wi-count" style="color:var(--green)">${infoRich.length}</div>
+    <div class="wi-info"><div class="wi-title">Info-rich contacts</div><div class="wi-desc">3+ fields (email, phone, company, etc.) — likely important</div></div>
+    <button class="mbtn primary" onclick="wizApply('rich')" ${infoRich.length===0?'disabled':''}>Keep All</button>
+  </div>`;
+  html += `<div class="wiz-item">
+    <div class="wi-count" style="color:var(--orange)">${noContact.length}</div>
+    <div class="wi-info"><div class="wi-title">No contact method</div><div class="wi-desc">Have a name but no email and no phone number</div></div>
+    <button class="mbtn danger" onclick="wizApply('nocontact')" ${noContact.length===0?'disabled':''}>Delete All</button>
+  </div>`;
+
+  const unreviewed = contacts.filter(c => c.status === 'unreviewed').length;
+  html += `<div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:var(--r);font-size:13px;color:var(--text2)">
+    After applying, <strong style="color:var(--text)">${unreviewed}</strong> contacts remain unreviewed.
+    Use <strong style="color:var(--text)">Quick Triage</strong> to rapidly review the rest.
+  </div>`;
+
+  document.getElementById('cleanup-content').innerHTML = html;
+  document.getElementById('cleanup-modal').classList.remove('hidden');
+}
+function wizApply(type) {
+  let affected;
+  switch (type) {
+    case 'noname': affected = contacts.filter(c => c.hasNoName && c.status === 'unreviewed'); break;
+    case 'nameonly': affected = contacts.filter(c => c.isMinimal && !c.hasNoName && c.status === 'unreviewed'); break;
+    case 'rich': affected = contacts.filter(c => c.infoScore >= 3 && c.status === 'unreviewed');
+      pushUndo(affected.map(c=>c.id)); affected.forEach(c => c.status = 'keep');
+      detectDuplicates(); openSmartCleanup(); render();
+      toast(`Kept ${affected.length} info-rich contacts`, 'green'); return;
+    case 'nocontact': affected = contacts.filter(c => c.emails.length===0 && c.phones.length===0 && c.status === 'unreviewed' && !c.hasNoName && !c.isMinimal);
+      break;
+  }
+  if (!affected) return;
+  pushUndo(affected.map(c=>c.id));
+  affected.forEach(c => c.status = 'delete');
+  detectDuplicates(); openSmartCleanup(); render();
+  toast(`Deleted ${affected.length} contacts`, 'red');
+}
+
+// ============ DUPLICATE GAME ============
+function openDupGame() {
+  if (duplicateGroups.length === 0) { toast('No duplicates found!', 'blue'); return; }
+  dgResolved = new Set(); dgCardSt = {}; dgChoices = {}; dgStats = {merged:0,skipped:0,deleted:0};
+  dgIdx = 0; skipToNextDg();
+  document.getElementById('dg-screen').classList.remove('hidden');
+  renderDg();
+}
+function openDupGameAt(gi) {
+  if (gi < 0) return;
+  dgResolved = new Set(); dgCardSt = {}; dgChoices = {}; dgStats = {merged:0,skipped:0,deleted:0};
+  dgIdx = gi;
+  document.getElementById('dg-screen').classList.remove('hidden');
+  renderDg();
+}
+function closeDupGame() { document.getElementById('dg-screen').classList.add('hidden'); render(); }
+
+function skipToNextDg() {
+  const t = duplicateGroups.length; let tries = 0;
+  while (tries < t) {
+    const g = duplicateGroups[dgIdx];
+    if (g && !dgResolved.has(dgIdx) && g.filter(id => contacts[id].status !== 'delete').length >= 2) return;
+    dgIdx = (dgIdx+1)%t; tries++;
+  }
+  dgIdx = -1;
+}
+function renderDg() {
+  const body = document.getElementById('dg-body');
+  const total = duplicateGroups.length, resolved = dgResolved.size;
+  const pct = total > 0 ? Math.round(resolved/total*100) : 0;
+  document.getElementById('dg-prog-fill').style.width = pct+'%';
+  document.getElementById('dg-prog-text').textContent = `${resolved} of ${total} resolved (${pct}%)`;
+
+  if (dgIdx === -1 || duplicateGroups.filter((_,i) => !dgResolved.has(i)).length === 0) {
+    body.innerHTML = `<div class="dg-done"><div class="di">✨</div><h3>All Done!</h3><p>You've reviewed all duplicate groups.</p>
+      <div class="ds"><div><div class="n" style="color:var(--purple)">${dgStats.merged}</div><div class="l">Merged</div></div>
+      <div><div class="n" style="color:var(--text2)">${dgStats.skipped}</div><div class="l">Skipped</div></div>
+      <div><div class="n" style="color:var(--red)">${dgStats.deleted}</div><div class="l">Deleted</div></div></div>
+      <button class="mbtn primary" onclick="closeDupGame()">Back to Contacts</button></div>`;
+    return;
+  }
+  const group = duplicateGroups[dgIdx];
+  const alive = group.filter(id => contacts[id].status !== 'delete');
+  if (alive.length < 2) { dgResolved.add(dgIdx); skipToNextDg(); renderDg(); return; }
+
+  const conf = group._conf || 'low';
+  const reasons = (group._reasons || []).join(', ');
+  const confLabel = conf === 'high' ? 'High confidence' : conf === 'med' ? 'Medium' : 'Low';
+
+  if (!dgCardSt[dgIdx]) dgCardSt[dgIdx] = {};
+  const cs = dgCardSt[dgIdx];
+
+  let html = `<div class="dg-reason"><strong>Group ${dgIdx+1} of ${total}</strong> — ${alive.length} contacts
+    <span class="conf ${conf}">${confLabel}</span><br>${reasons}</div>`;
+
+  html += '<div class="dg-cards">';
+  for (const id of alive) {
+    const c = contacts[id], st = cs[id]||'';
+    const cls = st==='keep'?'card-keep':st==='delete'?'card-del':'';
+    const badge = st==='keep'?'<span class="dc-st sk">KEEP</span>':st==='delete'?'<span class="dc-st sd">DELETE</span>':'';
+    let f = '';
+    for (const e of c.emails) f+=`<div class="dc-f"><span class="lbl">📧</span><span class="val">${escH(e)}</span></div>`;
+    for (const p of c.phones) f+=`<div class="dc-f"><span class="lbl">📱</span><span class="val">${escH(p)}</span></div>`;
+    if(c.company) f+=`<div class="dc-f"><span class="lbl">🏢</span><span class="val">${escH(c.company)}</span></div>`;
+    if(c.title) f+=`<div class="dc-f"><span class="lbl">💼</span><span class="val">${escH(c.title)}</span></div>`;
+    for(const a of c.addresses) f+=`<div class="dc-f"><span class="lbl">📍</span><span class="val">${escH(a)}</span></div>`;
+    if(c.birthday) f+=`<div class="dc-f"><span class="lbl">🎂</span><span class="val">${escH(c.birthday)}</span></div>`;
+    if(c.notes) f+=`<div class="dc-f"><span class="lbl">📝</span><span class="val">${escH(c.notes.substring(0,80))}</span></div>`;
+    if(!f) f='<div class="dc-f" style="color:var(--text2);font-style:italic">No additional info</div>';
+    const acts = st
+      ? `<button class="bu" onclick="dgCard(${dgIdx},${id},'')">Undo</button>`
+      : `<button class="bk" onclick="dgCard(${dgIdx},${id},'keep')">✓ Keep</button><button class="bd" onclick="dgCard(${dgIdx},${id},'delete')">✗ Delete</button>`;
+    html += `<div class="dc ${cls}">${badge}<div class="dc-name">${escH(c.fullName||'(No Name)')}</div>${f}<div class="dc-acts">${acts}</div></div>`;
+  }
+  html += '</div>';
+
+  // Merge preview
+  const keepIds = alive.filter(id => cs[id]==='keep');
+  const prevIds = keepIds.length >= 2 ? keepIds : alive.filter(id => cs[id]!=='delete');
+  if (prevIds.length >= 2) html += mkMergePreview(dgIdx, prevIds);
+  const canMerge = prevIds.length >= 2;
+
+  html += `<div class="dg-acts">
+    <button class="am" onclick="dgMerge(${dgIdx})" ${canMerge?'':'disabled'}>🔀 Merge${canMerge?' '+prevIds.length:''} <kbd>M</kbd></button>
+    <button class="as" onclick="dgSkip(${dgIdx})">Skip ⟶ <kbd>S</kbd></button>
+    <button class="aka" onclick="dgKeepAll(${dgIdx})">✓ Keep All <kbd>K</kbd></button>
+    <button class="ada" onclick="dgDelAll(${dgIdx})">🗑 Delete All <kbd>D</kbd></button>
+  </div>`;
+  body.innerHTML = html; body.scrollTop = 0;
+}
+
+function mkMergePreview(gi, ids) {
+  const sel = ids.map(id => contacts[id]);
+  if (!dgChoices[gi]) dgChoices[gi] = {};
+  const ch = dgChoices[gi];
+  const uNames = [...new Set(sel.map(c=>c.fullName).filter(Boolean))];
+  if (!ch.fullName && uNames.length>0) ch.fullName = uNames[0];
+  const uCo = [...new Set(sel.map(c=>c.company).filter(Boolean))];
+  if (!ch.company && uCo.length>0) ch.company = uCo[0];
+  const uTi = [...new Set(sel.map(c=>c.title).filter(Boolean))];
+  if (!ch.title && uTi.length>0) ch.title = uTi[0];
+
+  let h = '<div class="dg-preview"><h4>🔀 Merged Result</h4>';
+  const mkChoose = (label, items, field) => {
+    if (items.length > 1) {
+      h += `<div class="pr"><span class="pl">${label}:</span><div class="pc">`;
+      items.forEach(v => { h += `<span class="po ${ch[field]===v?'sel':''}" onclick="dgCh(${gi},'${field}',${JSON.stringify(v)})">${escH(v)}</span>`; });
+      h += '</div></div>';
+    } else if (items.length === 1) h += `<div class="pr"><span class="pl">${label}:</span><span class="pv">${escH(items[0])}</span></div>`;
+  };
+  mkChoose('Name', uNames, 'fullName'); mkChoose('Company', uCo, 'company'); mkChoose('Title', uTi, 'title');
+
+  const aE = [...new Set(sel.flatMap(c=>c.emails))], aP = dedupPhones(sel.flatMap(c=>c.phones));
+  const aA = [...new Set(sel.flatMap(c=>c.addresses))], aN = [...new Set(sel.map(c=>c.notes).filter(Boolean))];
+  const aB = [...new Set(sel.map(c=>c.birthday).filter(Boolean))];
+  if (aE.length) h += `<div class="pr"><span class="pl">Emails:</span><span class="pv">${aE.map(escH).join(', ')}</span></div>`;
+  if (aP.length) h += `<div class="pr"><span class="pl">Phones:</span><span class="pv">${aP.map(escH).join(', ')}</span></div>`;
+  if (aA.length) h += `<div class="pr"><span class="pl">Addresses:</span><span class="pv">${aA.map(escH).join(' | ')}</span></div>`;
+  if (aB.length) h += `<div class="pr"><span class="pl">Birthday:</span><span class="pv">${aB.join(', ')}</span></div>`;
+  if (aN.length) h += `<div class="pr"><span class="pl">Notes:</span><span class="pv">${aN.map(escH).join(' | ')}</span></div>`;
+  return h + '</div>';
+}
+function dgCh(gi, field, val) { if(!dgChoices[gi])dgChoices[gi]={}; dgChoices[gi][field]=val; renderDg(); }
+function dgCard(gi, id, st) { if(!dgCardSt[gi])dgCardSt[gi]={}; st?dgCardSt[gi][id]=st:delete dgCardSt[gi][id]; renderDg(); }
+
+function dgMerge(gi) {
+  const group = duplicateGroups[gi], alive = group.filter(id => contacts[id].status !== 'delete');
+  const cs = dgCardSt[gi]||{};
+  const keepIds = alive.filter(id => cs[id]==='keep');
+  const mergeIds = keepIds.length >= 2 ? keepIds : alive.filter(id => cs[id]!=='delete');
+  if (mergeIds.length < 2) return;
+
+  pushUndo(alive); // save all alive contacts for undo
+  const ch = dgChoices[gi]||{}, sel = mergeIds.map(id => contacts[id]);
+  const s = contacts[mergeIds[0]]; // survivor
+  if (ch.fullName) { s.fullName=ch.fullName; const p=ch.fullName.split(' '); s.firstName=p[0]||''; s.lastName=p.slice(1).join(' ')||''; }
+  if (ch.company) s.company=ch.company;
+  if (ch.title) s.title=ch.title;
+  s.emails = [...new Set(sel.flatMap(c=>c.emails))];
+  s.phones = dedupPhones(sel.flatMap(c=>c.phones));
+  s.addresses = [...new Set(sel.flatMap(c=>c.addresses))];
+  s.notes = [...new Set(sel.map(c=>c.notes).filter(Boolean))].join('\n');
+  if (!s.birthday) s.birthday = sel.map(c=>c.birthday).find(Boolean)||'';
+  s.emailDomain = s.emails.length>0 ? s.emails[0].split('@')[1]||'' : '';
+  s.infoScore = (s.emails.length>0?1:0)+(s.phones.length>0?1:0)+(s.company?1:0)+(s.addresses.length>0?1:0)+(s.notes?1:0)+(s.birthday?1:0);
+  s.isMinimal = s.emails.length===0&&s.phones.length===0&&!s.company&&s.addresses.length===0;
+  s.status='keep'; rawVCards[mergeIds[0]]=genVCard(s);
+  for (let i=1;i<mergeIds.length;i++) contacts[mergeIds[i]].status='delete';
+  for (const id of alive) { if(cs[id]==='delete' && !mergeIds.includes(id)) contacts[id].status='delete'; }
+  dgStats.merged++; dgResolved.add(gi); detectDuplicates(); dgAdv(gi);
+  toast(`Merged ${mergeIds.length} contacts → ${s.fullName}`, 'purple');
+}
+function dgSkip(gi) { dgStats.skipped++; dgResolved.add(gi); dgAdv(gi); }
+function dgKeepAll(gi) {
+  const alive = duplicateGroups[gi].filter(id => contacts[id].status !== 'delete');
+  pushUndo(alive); alive.forEach(id => { contacts[id].status='keep'; });
+  dgStats.skipped++; dgResolved.add(gi); dgAdv(gi);
+}
+function dgDelAll(gi) {
+  const alive = duplicateGroups[gi].filter(id => contacts[id].status !== 'delete');
+  pushUndo(alive); alive.forEach(id => { contacts[id].status='delete'; });
+  dgStats.deleted++; dgResolved.add(gi); detectDuplicates(); dgAdv(gi);
+}
+function dgAdv(gi) { dgIdx=(gi+1)%duplicateGroups.length; skipToNextDg(); renderDg(); }
+
+// ============ EXPORT ============
+function genVCard(c) {
+  let l=['BEGIN:VCARD','VERSION:3.0'];
+  l.push(`N:${c.lastName||''};${c.firstName||''};;;`);
+  l.push(`FN:${c.fullName||''}`);
+  if(c.company) l.push(`ORG:${c.company}`);
+  if(c.title) l.push(`TITLE:${c.title}`);
+  c.emails.forEach(e=>l.push(`EMAIL:${e}`));
+  c.phones.forEach(p=>l.push(`TEL:${p}`));
+  c.addresses.forEach(a=>l.push(`ADR:;;${a.split(',').map(s=>s.trim()).join(';')}`));
+  if(c.birthday) l.push(`BDAY:${c.birthday}`);
+  if(c.notes) l.push(`NOTE:${c.notes}`);
+  l.push('END:VCARD'); return l.join('\n');
+}
+function exportKeep() {
+  const kc=contacts.filter(c=>c.status!=='delete');
+  const blob=new Blob([kc.map(c=>rawVCards[c.id]).join('\n')],{type:'text/vcard'});
+  dl(blob,'contacts-cleaned.vcf');
+  toast(`Exported ${kc.length} contacts`, 'green');
+}
+function exportDeleteList() {
+  const dc=contacts.filter(c=>c.status==='delete');
+  const lines=dc.map(c=>`${c.fullName}${c.company?' ('+c.company+')':''}${c.emails.length?' — '+c.emails[0]:''}`);
+  const hdr=`Contact Cleaner — Delete List\nGenerated: ${new Date().toLocaleDateString()}\nTotal: ${dc.length}\n${'='.repeat(50)}\n\n`;
+  dl(new Blob([hdr+lines.join('\n')],{type:'text/plain'}),'contacts-delete-list.txt');
+}
+function dl(blob, name) { const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u); }
+
+function showSummary() {
+  const t=contacts.length,k=contacts.filter(c=>c.status==='keep').length,d=contacts.filter(c=>c.status==='delete').length,u=t-k-d;
+  const dc={};contacts.filter(c=>c.status==='delete'&&c.company).forEach(c=>{dc[c.company]=(dc[c.company]||0)+1;});
+  const tc=Object.entries(dc).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([n,c])=>`<li>${escH(n)}: ${c}</li>`).join('');
+  document.getElementById('summary-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+    <div style="background:var(--surface2);padding:12px;border-radius:8px;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--green)">${k}</div><div style="font-size:12px;color:var(--text2)">Keeping</div></div>
+    <div style="background:var(--surface2);padding:12px;border-radius:8px;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--red)">${d}</div><div style="font-size:12px;color:var(--text2)">Deleting</div></div>
+    <div style="background:var(--surface2);padding:12px;border-radius:8px;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--text2)">${u}</div><div style="font-size:12px;color:var(--text2)">Unreviewed</div></div>
+    <div style="background:var(--surface2);padding:12px;border-radius:8px;text-align:center"><div style="font-size:28px;font-weight:700">${t}</div><div style="font-size:12px;color:var(--text2)">Total</div></div></div>
+    <div style="font-size:13px;color:var(--text2)"><strong style="color:var(--text)">Reduction:</strong> ${t>0?Math.round(d/t*100):0}%</div>
+    ${tc?`<div style="margin-top:12px;font-size:13px"><strong>Top companies removed:</strong><ul style="margin-top:4px;padding-left:20px">${tc}</ul></div>`:''}`;
+  document.getElementById('summary-modal').classList.remove('hidden');
+}
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+function setView(v) { currentView=v; document.querySelectorAll('.vt button').forEach(b=>b.classList.toggle('active',b.dataset.view===v)); render(); }
+function resetAll() { if(!confirm('Start over?'))return; contacts.forEach(c=>c.status='unreviewed'); protectedLastNames.clear();protectedCompanies.clear();protectedDomains.clear(); undoStack=[]; currentFilter='all'; detectDuplicates(); render(); }
+
+// ============ UTILITY ============
+function escH(s) { const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+function esc(s) { return s.replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+// ============ INIT ============
+function init() {
+  const dz=document.getElementById('drop-zone'), fi=document.getElementById('file-input');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over')});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0])});
+  dz.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')fi.click()});
+  fi.addEventListener('change',()=>{if(fi.files[0])loadFile(fi.files[0])});
+  document.querySelectorAll('.fbtn').forEach(b=>{b.addEventListener('click',()=>{if(b.dataset.filter){currentFilter=b.dataset.filter;render();}})});
+  document.getElementById('sort-select').addEventListener('change',e=>{currentSort=e.target.value;render()});
+  let st; document.getElementById('search-input').addEventListener('input',()=>{clearTimeout(st);st=setTimeout(render,200)});
+
+  document.addEventListener('keydown', e => {
+    const triageOpen = !document.getElementById('triage-screen').classList.contains('hidden');
+    const dgOpen = !document.getElementById('dg-screen').classList.contains('hidden');
+    const modalOpen = !document.getElementById('cleanup-modal').classList.contains('hidden') || !document.getElementById('summary-modal').classList.contains('hidden');
+    const searchFocused = document.activeElement === document.getElementById('search-input');
+
+    // Escape
+    if (e.key === 'Escape') {
+      if (triageOpen) closeTriage();
+      else if (dgOpen) closeDupGame();
+      else if (modalOpen) { closeModal('cleanup-modal'); closeModal('summary-modal'); }
+      return;
+    }
+
+    // Undo: Cmd+Z / Ctrl+Z
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); popUndo(); return; }
+
+    // Don't capture keys when typing in search
+    if (searchFocused || modalOpen) return;
+
+    // Quick Triage mode shortcuts
+    if (triageOpen) {
+      if (e.key === 'ArrowRight' || e.key === 'k') { e.preventDefault(); trAct('keep'); }
+      else if (e.key === 'ArrowLeft' || e.key === 'j') { e.preventDefault(); trAct('delete'); }
+      else if (e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); trAct('skip'); }
+      else if (e.key === 'p' || e.key === 'P') { e.preventDefault(); trProtect(); }
+      return;
+    }
+
+    // Dup game shortcuts
+    if (dgOpen && dgIdx >= 0) {
+      if (e.key==='m'||e.key==='M') { e.preventDefault(); dgMerge(dgIdx); }
+      else if (e.key==='s'||e.key==='S') { e.preventDefault(); dgSkip(dgIdx); }
+      else if (e.key==='d'||e.key==='D') { e.preventDefault(); dgDelAll(dgIdx); }
+      else if (e.key==='k'||e.key==='K') { e.preventDefault(); dgKeepAll(dgIdx); }
+      return;
+    }
+
+    // Main view shortcuts
+    if (e.key === 't' || e.key === 'T') { e.preventDefault(); openTriage(); }
+    else if (e.key === 'g' || e.key === 'G') { e.preventDefault(); openDupGame(); }
+    else if (e.key === '/') { e.preventDefault(); document.getElementById('search-input').focus(); }
+  });
+}
+
+function loadFile(file) {
+  const r = new FileReader();
+  r.onload = e => {
+    const res = parseVCardFile(e.target.result);
+    contacts = res.parsed; rawVCards = res.raws;
+    detectDuplicates();
+    document.getElementById('upload-screen').style.display = 'none';
+    document.getElementById('app').classList.remove('hidden');
+    render();
+    toast(`Loaded ${contacts.length} contacts — ${duplicateGroups.length} duplicate groups found`, 'blue');
+  };
+  r.readAsText(file);
+}
+
+init();
+</script>
+</body>
+</html>
