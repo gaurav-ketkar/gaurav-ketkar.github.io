@@ -17,7 +17,8 @@ const {
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-const plausibleDomain = import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN;
+const cloudflareAnalyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
+const clarityProjectId = import.meta.env.PUBLIC_CLARITY_PROJECT_ID;
 ---
 
 <!doctype html>
@@ -65,12 +66,22 @@ const plausibleDomain = import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN;
       }
     </script>
 
-    {plausibleDomain && (
+    {cloudflareAnalyticsToken && (
       <script
         defer
-        data-domain={plausibleDomain}
-        src="https://plausible.io/js/script.js"
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={`{"token":"${cloudflareAnalyticsToken}"}`}
       ></script>
+    )}
+
+    {clarityProjectId && (
+      <script is:inline>
+        (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window,document,"clarity","script",{clarityProjectId});
+      </script>
     )}
   </head>
   <body class="min-h-screen flex flex-col">
@@ -94,66 +105,5 @@ const plausibleDomain = import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN;
       document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
     </script>
 
-    <!-- Lightweight behavioral tracking via Plausible custom events -->
-    <script is:inline>
-      (function () {
-        function emit(eventName, props) {
-          if (typeof window.plausible !== 'function') return;
-          window.plausible(eventName, { props: props || {} });
-        }
-
-        function cleanText(value) {
-          return (value || '').replace(/\s+/g, ' ').trim().slice(0, 80);
-        }
-
-        document.addEventListener('click', function (evt) {
-          const target = evt.target;
-          if (!(target instanceof Element)) return;
-
-          const tracked = target.closest('[data-track]');
-          if (tracked) {
-            const anchor = tracked.closest('a[href]') || (tracked.matches('a[href]') ? tracked : null);
-            emit('UI Click', {
-              track: tracked.getAttribute('data-track') || 'unknown',
-              text: cleanText(tracked.textContent),
-              href: anchor ? anchor.getAttribute('href') : null,
-              page: location.pathname,
-            });
-          }
-
-          const link = target.closest('a[href]');
-          if (!link) return;
-          const href = link.getAttribute('href') || '';
-          if (!href) return;
-
-          const isExternal = link.host && link.host !== location.host;
-          if (isExternal) {
-            emit('Outbound Click', {
-              href,
-              text: cleanText(link.textContent),
-              page: location.pathname,
-            });
-          }
-        });
-
-        const scrollMilestones = [25, 50, 75, 100];
-        const seen = new Set();
-
-        window.addEventListener('scroll', function () {
-          const doc = document.documentElement;
-          const scrollTop = doc.scrollTop || document.body.scrollTop;
-          const height = doc.scrollHeight - doc.clientHeight;
-          if (height <= 0) return;
-
-          const pct = Math.round((scrollTop / height) * 100);
-          for (const point of scrollMilestones) {
-            if (pct >= point && !seen.has(point)) {
-              seen.add(point);
-              emit('Scroll Depth', { depth: point, page: location.pathname });
-            }
-          }
-        }, { passive: true });
-      })();
-    </script>
   </body>
 </html>
