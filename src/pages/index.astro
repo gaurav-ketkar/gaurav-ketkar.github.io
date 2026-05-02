@@ -32,6 +32,7 @@ const projects = (await getCollection('projects'))
         <div class="flex flex-wrap gap-4 reveal">
           <a
             href="/about"
+            data-track="home_cta_about"
             class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-saffron-500 text-white font-medium hover:bg-saffron-600 transition-colors shadow-warm-sm"
           >
             More about me
@@ -41,6 +42,7 @@ const projects = (await getCollection('projects'))
           </a>
           <a
             href="/blog"
+            data-track="home_cta_blog"
             class="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-cream-400 dark:border-charcoal-700 text-umber-700 dark:text-cream-300 font-medium hover:bg-cream-200 dark:hover:bg-charcoal-700 transition-colors"
           >
             Read my writing
