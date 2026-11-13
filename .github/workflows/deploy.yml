@@ -3,12 +3,10 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: pages
@@ -17,37 +15,88 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 20
-          cache: npm
+          node-version-file: .nvmrc
+          package-manager-cache: false
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Prepare isolated builder
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/npm-toolchain" --ignore-scripts --no-audit --no-fund npm@11.21.2
+          sudo cp -R "$RUNNER_TEMP/npm-toolchain/node_modules/npm" /opt/website-npm
+          sudo useradd --create-home --shell /bin/bash sitebuilder
+          chmod 700 "$HOME" "$RUNNER_TEMP"
+          sudo install -d -o sitebuilder -g sitebuilder /home/sitebuilder/site
+          git archive HEAD | sudo -u sitebuilder tar -xf - -C /home/sitebuilder/site
+          uid="$(id -u sitebuilder)"
+          sudo iptables -N WEBSITE_BUILD
+          sudo iptables -A OUTPUT -m owner --uid-owner "$uid" -j WEBSITE_BUILD
+          sudo iptables -A WEBSITE_BUILD -o lo -j ACCEPT
+          mapfile -t registry_ips < <(getent ahostsv4 registry.npmjs.org | awk '{print $1}' | sort -u)
+          test "${#registry_ips[@]}" -gt 0
+          for ip in "${registry_ips[@]}"; do
+            sudo iptables -A WEBSITE_BUILD -d "$ip" -p tcp --dport 443 -j ACCEPT
+          done
+          sudo iptables -A WEBSITE_BUILD -j REJECT
+          sudo ip6tables -A OUTPUT -m owner --uid-owner "$uid" -o lo -j ACCEPT
+          sudo ip6tables -A OUTPUT -m owner --uid-owner "$uid" -j REJECT
 
-      - name: Build site
-        run: npm run build
+      - name: Install, audit, test and build without runner credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          node_bin="$(dirname "$(command -v node)")"
+          sudo -u sitebuilder env -i \
+            HOME=/home/sitebuilder PATH="$node_bin:/usr/bin:/bin" \
+            ASTRO_TELEMETRY_DISABLED=1 \
+            PUBLIC_CF_ANALYTICS_TOKEN="$PUBLIC_CF_ANALYTICS_TOKEN" \
+            PUBLIC_CLARITY_PROJECT_ID="$PUBLIC_CLARITY_PROJECT_ID" \
+            setpriv --no-new-privs bash --noprofile --norc -euo pipefail -c '
+              cd /home/sitebuilder/site
+              test "$(node /opt/website-npm/bin/npm-cli.js --version)" = 11.21.2
+              node scripts/check-release-age.mjs
+              node /opt/website-npm/bin/npm-cli.js ci --ignore-scripts --min-release-age=7 --no-fund
+              node /opt/website-npm/bin/npm-cli.js audit --audit-level=low
+              node /opt/website-npm/bin/npm-cli.js test
+              node /opt/website-npm/bin/npm-cli.js run build
+            '
+          sudo cp -R /home/sitebuilder/site/dist "$GITHUB_WORKSPACE/dist"
+          test -z "$(sudo find "$GITHUB_WORKSPACE/dist" ! -type d ! -type f -print -quit)"
+          sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE/dist"
         env:
           PUBLIC_CF_ANALYTICS_TOKEN: ${{ vars.PUBLIC_CF_ANALYTICS_TOKEN }}
           PUBLIC_CLARITY_PROJECT_ID: ${{ vars.PUBLIC_CLARITY_PROJECT_ID }}
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: dist
 
   deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -621,12 +621,17 @@ function render() {
     const groups = groupList(sorted);
     for (const [name, gc] of groups) {
       const h = document.createElement('div'); h.className = 'group-header';
-      let pb = '';
+      const label = document.createElement('span');
+      label.textContent = `${name} (${gc.length})`;
+      h.appendChild(label);
       if (currentSort === 'company' && name !== '(No Company)') {
-        const on = protectedCompanies.has(name);
-        pb = `<button class="pgbtn ${on?'on':''}" onclick="toggleProtectCo('${esc(name)}')">${on?'✓ Protected':'Protect All'}</button>`;
+        const on = protectedCompanies.has(name.toLowerCase());
+        const button = document.createElement('button');
+        button.className = `pgbtn ${on?'on':''}`;
+        button.textContent = on ? '✓ Protected' : 'Protect All';
+        button.addEventListener('click', () => toggleProtectCo(name));
+        h.appendChild(button);
       }
-      h.innerHTML = `<span>${escH(name)} (${gc.length})</span>${pb}`;
       el.appendChild(h);
       gc.forEach(c => el.appendChild(mkCard(c)));
     }
@@ -664,13 +669,18 @@ function mkCard(c) {
     acts = `<button class="bk" onclick="doMark(${c.id},'keep')">Keep</button>
             <button class="bu" onclick="doMark(${c.id},'unreviewed')">Undo</button>`;
   }
-  // Protect last name (only if not already protected)
-  if (c.lastName && !protectedLastNames.has(c.lastName.toLowerCase())) {
-    acts += `<button class="bk" style="font-size:11px" onclick="doProtectName('${esc(c.lastName)}')" title="Keep all ${esc(c.lastName)}">🛡</button>`;
-  }
   card.innerHTML = `<div class="av" style="background:${avBg}">${escH(ini)}</div>
     <div class="ci"><div class="cn">${escH(c.fullName||'(No Name)')}</div><div class="cm">${meta}</div><div class="cb">${badges}</div></div>
     <div class="ca">${acts}</div>`;
+  if (c.lastName && !protectedLastNames.has(c.lastName.toLowerCase())) {
+    const button = document.createElement('button');
+    button.className = 'bk';
+    button.style.fontSize = '11px';
+    button.textContent = '🛡';
+    button.title = `Keep all ${c.lastName}`;
+    button.addEventListener('click', () => doProtectName(c.lastName));
+    card.querySelector('.ca').appendChild(button);
+  }
   return card;
 }
 
@@ -750,15 +760,23 @@ function updateFilters() {
 }
 function renderProtected() {
   const render1 = (container, items, removeFn, prefix='') => {
-    const el = document.getElementById(container); el.innerHTML = '';
+    const el = document.getElementById(container); el.replaceChildren();
     for (const name of items) {
-      el.innerHTML += `<span class="ptag">${prefix}${escH(name)} <span class="rm" onclick="${removeFn}('${esc(name)}')">&times;</span></span>`;
+      const tag = document.createElement('span');
+      tag.className = 'ptag';
+      tag.textContent = `${prefix}${name} `;
+      const remove = document.createElement('span');
+      remove.className = 'rm';
+      remove.textContent = '×';
+      remove.addEventListener('click', () => removeFn(name));
+      tag.appendChild(remove);
+      el.appendChild(tag);
     }
     if (items.size === 0) el.innerHTML = '<span style="font-size:12px;color:var(--text2);padding:4px">None</span>';
   };
-  render1('pl-names', protectedLastNames, 'rmProtName');
-  render1('pl-companies', protectedCompanies, 'rmProtCo');
-  render1('pl-domains', protectedDomains, 'rmProtDom', '@');
+  render1('pl-names', protectedLastNames, rmProtName);
+  render1('pl-companies', protectedCompanies, rmProtCo);
+  render1('pl-domains', protectedDomains, rmProtDom, '@');
 }
 function rmProtName(n) { protectedLastNames.delete(n.toLowerCase()); detectDuplicates(); render(); }
 function rmProtCo(n) { protectedCompanies.delete(n.toLowerCase()); render(); }
@@ -965,7 +983,7 @@ function renderDg() {
   const cs = dgCardSt[dgIdx];
 
   let html = `<div class="dg-reason"><strong>Group ${dgIdx+1} of ${total}</strong> — ${alive.length} contacts
-    <span class="conf ${conf}">${confLabel}</span><br>${reasons}</div>`;
+    <span class="conf ${conf}">${confLabel}</span><br>${escH(reasons)}</div>`;
 
   html += '<div class="dg-cards">';
   for (const id of alive) {
@@ -991,7 +1009,7 @@ function renderDg() {
   // Merge preview
   const keepIds = alive.filter(id => cs[id]==='keep');
   const prevIds = keepIds.length >= 2 ? keepIds : alive.filter(id => cs[id]!=='delete');
-  if (prevIds.length >= 2) html += mkMergePreview(dgIdx, prevIds);
+  if (prevIds.length >= 2) html += '<div class="dg-merge-preview"></div>';
   const canMerge = prevIds.length >= 2;
 
   html += `<div class="dg-acts">
@@ -1000,7 +1018,9 @@ function renderDg() {
     <button class="aka" onclick="dgKeepAll(${dgIdx})">✓ Keep All <kbd>K</kbd></button>
     <button class="ada" onclick="dgDelAll(${dgIdx})">🗑 Delete All <kbd>D</kbd></button>
   </div>`;
-  body.innerHTML = html; body.scrollTop = 0;
+  body.innerHTML = html;
+  if (canMerge) body.querySelector('.dg-merge-preview').replaceWith(mkMergePreview(dgIdx, prevIds));
+  body.scrollTop = 0;
 }
 
 function mkMergePreview(gi, ids) {
@@ -1014,25 +1034,52 @@ function mkMergePreview(gi, ids) {
   const uTi = [...new Set(sel.map(c=>c.title).filter(Boolean))];
   if (!ch.title && uTi.length>0) ch.title = uTi[0];
 
-  let h = '<div class="dg-preview"><h4>🔀 Merged Result</h4>';
+  const preview = document.createElement('div');
+  preview.className = 'dg-preview';
+  const heading = document.createElement('h4');
+  heading.textContent = '🔀 Merged Result';
+  preview.appendChild(heading);
+  const row = (label, value) => {
+    const el = document.createElement('div');
+    el.className = 'pr';
+    const name = document.createElement('span');
+    name.className = 'pl';
+    name.textContent = `${label}:`;
+    el.appendChild(name);
+    el.appendChild(value);
+    preview.appendChild(el);
+  };
+  const textRow = (label, text) => {
+    const value = document.createElement('span');
+    value.className = 'pv';
+    value.textContent = text;
+    row(label, value);
+  };
   const mkChoose = (label, items, field) => {
     if (items.length > 1) {
-      h += `<div class="pr"><span class="pl">${label}:</span><div class="pc">`;
-      items.forEach(v => { h += `<span class="po ${ch[field]===v?'sel':''}" onclick="dgCh(${gi},'${field}',${JSON.stringify(v)})">${escH(v)}</span>`; });
-      h += '</div></div>';
-    } else if (items.length === 1) h += `<div class="pr"><span class="pl">${label}:</span><span class="pv">${escH(items[0])}</span></div>`;
+      const choices = document.createElement('div');
+      choices.className = 'pc';
+      for (const v of items) {
+        const option = document.createElement('span');
+        option.className = `po ${ch[field]===v?'sel':''}`;
+        option.textContent = v;
+        option.addEventListener('click', () => dgCh(gi, field, v));
+        choices.appendChild(option);
+      }
+      row(label, choices);
+    } else if (items.length === 1) textRow(label, items[0]);
   };
   mkChoose('Name', uNames, 'fullName'); mkChoose('Company', uCo, 'company'); mkChoose('Title', uTi, 'title');
 
   const aE = [...new Set(sel.flatMap(c=>c.emails))], aP = dedupPhones(sel.flatMap(c=>c.phones));
   const aA = [...new Set(sel.flatMap(c=>c.addresses))], aN = [...new Set(sel.map(c=>c.notes).filter(Boolean))];
   const aB = [...new Set(sel.map(c=>c.birthday).filter(Boolean))];
-  if (aE.length) h += `<div class="pr"><span class="pl">Emails:</span><span class="pv">${aE.map(escH).join(', ')}</span></div>`;
-  if (aP.length) h += `<div class="pr"><span class="pl">Phones:</span><span class="pv">${aP.map(escH).join(', ')}</span></div>`;
-  if (aA.length) h += `<div class="pr"><span class="pl">Addresses:</span><span class="pv">${aA.map(escH).join(' | ')}</span></div>`;
-  if (aB.length) h += `<div class="pr"><span class="pl">Birthday:</span><span class="pv">${aB.join(', ')}</span></div>`;
-  if (aN.length) h += `<div class="pr"><span class="pl">Notes:</span><span class="pv">${aN.map(escH).join(' | ')}</span></div>`;
-  return h + '</div>';
+  if (aE.length) textRow('Emails', aE.join(', '));
+  if (aP.length) textRow('Phones', aP.join(', '));
+  if (aA.length) textRow('Addresses', aA.join(' | '));
+  if (aB.length) textRow('Birthday', aB.join(', '));
+  if (aN.length) textRow('Notes', aN.join(' | '));
+  return preview;
 }
 function dgCh(gi, field, val) { if(!dgChoices[gi])dgChoices[gi]={}; dgChoices[gi][field]=val; renderDg(); }
 function dgCard(gi, id, st) { if(!dgCardSt[gi])dgCardSt[gi]={}; st?dgCardSt[gi][id]=st:delete dgCardSt[gi][id]; renderDg(); }
@@ -1126,7 +1173,6 @@ function resetAll() { if(!confirm('Start over?'))return; contacts.forEach(c=>c.s
 
 // ============ UTILITY ============
 function escH(s) { const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
-function esc(s) { return s.replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
 // ============ INIT ============
 function init() {
